@@ -1,5 +1,5 @@
 # etherd
-etherd 提供了以太坊代币(包括ERC20代币)转账和收款通知功能，可以使用它轻松地将以太坊上的代币接入到自己的系统里面。另外提供了web3 rpc请求的转发功能，web3 客户端程序可以直接连接使用。
+etherd 提供以太坊代币(包括ERC20代币)转账、收款通知功能以及发行代币等功能。您可以使用它轻松地将以太坊上的代币接入到自己的系统里面。另外还提供了JSON RPC API转发功能，可以直接调用ethereum 节点支持的JSON RPC API。
 
 > 测试环境：node.js v8.10.0
 
@@ -35,13 +35,13 @@ node index.js
     ETH: {
         keystore: 'config/test.keystore',                               // 钱包路径
         unlockPassword: '123456',                                       // 钱包解锁密码
-        notify: 'http:/peatio-server/webhooks/eth'                      // 收款通知地址
+        notify: 'http:/127.0.0.1/webhooks/eth'                      // 收款通知地址
     },
     BOKKY: {
         keystore: 'config/test.keystore',                               // 钱包路径
         unlockPassword: '123456',                                       // 钱包解锁密码
         contractAddress: '0x583cbBb8a8443B38aBcC0c956beCe47340ea1367',  // 代币合约地址
-        notify: 'http://peatio-server/webhooks/bokky'                   // 收款通知地址
+        notify: 'http://127.0.0.1/webhooks/bokky'                   // 收款通知地址
     }
 }
 ```
