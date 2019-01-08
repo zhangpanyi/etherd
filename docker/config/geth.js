@@ -1,0 +1,6 @@
+module.exports = {
+    gasLimit: 420000,
+    rawTxGasLimit: 840000,
+    confirmations: 12,
+    endpoint: 'https://ropsten.infura.io/v3/935a2863572e43f7aea5a80029a7bd1e'
+};

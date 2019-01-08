@@ -1,0 +1,6 @@
+module.exports = {
+    gasLimit: 420000,
+    rawTxGasLimit: 840000,
+    confirmations: 12,
+    endpoint: 'http://127.0.0.1:8545'
+};
