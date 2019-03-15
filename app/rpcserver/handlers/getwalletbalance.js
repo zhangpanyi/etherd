@@ -22,16 +22,5 @@ module.exports = async function(ethereum, req, callback) {
     }
 
     // 计算钱包余额
-    let balances = new Array();
-    for (let address of ethereum.getAccounts()) {
-        let error, balance;
-        [error, balance] = await future(ethereum.getBalance(address, rule[0].value));
-        if (error != null) {
-            error = {code: -32000, message: error.message};
-            callback(error, undefined);
-            return;
-        }
-        balances.push({'address': address, 'balance': balance.toString()});
-    }
-    callback(undefined, balances);
+    callback(undefined, ethereum.getWalletBalances(rule[0].value));
 }

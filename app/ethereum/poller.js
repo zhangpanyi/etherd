@@ -113,6 +113,14 @@ class Poller {
             notify.hash = transaction.hash;   
             notify.blockNumber = transaction.blockNumber;
             if (transaction.to && this._ethereum.isMineAccount(transaction.to)) {
+                // 更新余额
+                if (this._ethereum.isMineAccount(transaction.to)) {
+                    this._ethereum.updateWalletBalances(transaction.to, 'ETH');
+                }
+                if (this._ethereum.isMineAccount(transaction.from)) {
+                    this._ethereum.updateWalletBalances(transaction.from, 'ETH');
+                }
+
                 // 普通转账
                 notify.symbol = 'ETH';
                 notify.to = transaction.to.toLowerCase();
@@ -129,18 +137,32 @@ class Poller {
                     continue;
                 }
 
-                // 回调通知
-                if (ok && this._ethereum.isMineAccount(info.to)) {
-                    if (info.from != null) {
-                        notify.from = info.from;
+                if (ok) {
+                    if (info.from == null) {
+                        info.from = transaction.from;
                     }
-                    notify.symbol = info.symbol;
-                    notify.to = info.to.toLowerCase();
-                    notify.amount = info.amount;
-                    logger.warn('Transfer has been received, from: %s, to: %s, symbol: %s, amount: %s, txid: %s',
-                        notify.from, notify.to, notify.symbol, notify.amount, notify.hash);
-                    notify.post(this._getWalletNotify(transaction.to));
-                }      
+
+                    // 更新余额
+                    if (this._ethereum.isMineAccount(info.to)) {
+                        this._ethereum.updateWalletBalances(info.to, info.symbol);
+                    }
+                    if (this._ethereum.isMineAccount(info.from)) {
+                        this._ethereum.updateWalletBalances(info.from, info.symbol);
+                    }
+
+                    // 回调通知
+                    if (this._ethereum.isMineAccount(info.to)) {
+                        if (info.from != null) {
+                            notify.from = info.from;
+                        }
+                        notify.symbol = info.symbol;
+                        notify.to = info.to.toLowerCase();
+                        notify.amount = info.amount;
+                        logger.warn('Transfer has been received, from: %s, to: %s, symbol: %s, amount: %s, txid: %s',
+                            notify.from, notify.to, notify.symbol, notify.amount, notify.hash);
+                        notify.post(this._getWalletNotify(transaction.to));
+                    }      
+                }
             }
             i++;
         }

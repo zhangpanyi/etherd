@@ -22,7 +22,7 @@ class Datastore {
     }
 
     // 查询挂起交易
-    async findPending() {
+    async txPending() {
         let error, res;
         [error, res] = await future(this._db.find({pending: true}));
         if (error != null) {
@@ -32,7 +32,7 @@ class Datastore {
     }
 
     // 查询完成交易
-    async findCompleted() {
+    async txCompleted() {
         let error, res;
         [error, res] = await future(this._db.find({ok: true}));
         if (error != null) {

@@ -4,6 +4,7 @@ const EIP20 = require('./eip20');
 const utils = require('./utils');
 const Poller = require('./poller');
 const Notify = require('./notify');
+const Balances = require('./balances');
 const Datastore = require('./datastore');
 const sleep = require('../common/sleep');
 const future = require('../common/future');
@@ -19,7 +20,7 @@ class Ethereum {
         this._acounts = null;
         this._started = false;
         this._web3 = new Web3();
-        this._poller = new Poller(this, this._web3);
+        this._balances = new Map();
         this._eip20 = new EIP20('contract/token/EIP20');
 
         // 初始ETH配置
@@ -38,6 +39,12 @@ class Ethereum {
             }
         }
 
+        // 创建交易数据库
+        this._datastore = new Datastore();
+
+        // 观察钱包余额
+        this._watchWalletBalances();
+
         // 创建账户管理
         const Accounts = require('./accounts');
         this._acounts = new Accounts('keystore');
@@ -46,8 +53,8 @@ class Ethereum {
         const Transfer = require('./transfer');
         this._transfer = new Transfer(this._web3);
 
-        // 创建交易数据库
-        this._datastore = new Datastore();
+        // 创建轮询模块
+        this._poller = new Poller(this, this._web3);
     }
 
     // 开始轮询
@@ -73,6 +80,24 @@ class Ethereum {
         return this._acounts.getAccounts();
     }
 
+    // 获取符号列表
+    async getSymbols() {
+        let symbols = ['ETH'];
+        for (let symbol in this._tokens) {
+            symbols.push(symbol);
+        }
+
+        let error, txs;
+        [error, txs] = await future(this._datastore.txCompleted());
+        if (error != null) {
+            return symbols;
+        }
+        for (let idx in txs) {
+            symbols.push(txs[idx].symbol);
+        }
+        return symbols;
+    }
+
     // 是否我的账户
     isMineAccount(address) {
         return this._acounts.has(address);
@@ -92,7 +117,7 @@ class Ethereum {
         }
 
         let error, txs;
-        [error, txs] = await future(this._datastore.findCompleted());
+        [error, txs] = await future(this._datastore.txCompleted());
         if (error != null) {
             return null;
         }
@@ -145,6 +170,22 @@ class Ethereum {
         }
         token.decimals = decimals;
         return decimals;
+    }
+
+    // 获取钱包余额
+    getWalletBalances(symbol) {
+        if (!this._balances.has(symbol)) {
+            return [];
+        }
+        return this._balances.get(symbol).balances();
+    }
+
+    // 更新钱包余额
+    updateWalletBalances(address, symbol) {
+        if (!this._balances.has(symbol)) {
+            return;
+        }
+        this._balances.get(symbol).updateBalance(address);
     }
 
      // 获取账户余额
@@ -270,7 +311,7 @@ class Ethereum {
     async _watchTransactions() {
         let web3 = this._web3;
         while (this._started) {
-            let txs = await this._datastore.findPending();
+            let txs = await this._datastore.txPending();
             for (let idx in txs) {
                 let error, tx;
                 let txid = txs[idx].txid;
@@ -297,9 +338,22 @@ class Ethereum {
 
                     let token = await this.findToken(txs[idx].symbol);
                     notify.post(token.notify);
+
+                    this._watchWalletBalances();
                 }
             }
-            await sleep(10000);
+            await sleep(1000 * 10);
+        }
+    }
+
+    // 观察钱包余额
+    async _watchWalletBalances() {
+        let symbols = await this.getSymbols();
+        for (let idx in symbols) {
+            let symbol = symbols[idx];
+            if (!this._balances.has(symbol)) {
+                this._balances.set(symbol, new Balances(this, symbol));
+            }
         }
     }
 }
