@@ -67,7 +67,9 @@ class Accounts {
             const slices = filename.split('--');
             if (slices.length == 3) {
                 const address = '0x' + slices[2].toLowerCase();
-                accounts.add(address);
+                if (address.length == 42) {
+                    accounts.add(address);
+                }
             }
         }
         if (this._accounts == null) {
