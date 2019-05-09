@@ -144,7 +144,7 @@ class Transfer {
         }
 
         let cmpret = new BN(toAmount, 10).cmp(new BN(balance, 10));
-        if (cmpret == 0 || cmpret == 1) {
+        if (cmpret == 1) {
             error = new Error('Insufficient coins');
             logger.error('Failed to send ERC20 token, %s', error.message);
             throw error;
