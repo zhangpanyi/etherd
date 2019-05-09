@@ -123,6 +123,7 @@ class Poller {
 
                 // 筛除转账
                 if (transaction.from.toLowerCase() == token.address.toLowerCase()) {
+                    i++;
                     continue;
                 }
 
