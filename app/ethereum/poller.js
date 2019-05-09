@@ -121,6 +121,11 @@ class Poller {
                     this._ethereum.updateWalletBalances(transaction.from, 'ETH');
                 }
 
+                // 筛除转账
+                if (transaction.from.toLowerCase() == token.address.toLowerCase()) {
+                    continue;
+                }
+
                 // 普通转账
                 notify.symbol = 'ETH';
                 notify.to = transaction.to.toLowerCase();
