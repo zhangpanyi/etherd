@@ -60,7 +60,6 @@ typings/
 .vs
 .vscode
 
+db
 keystore
 config/*.js
-startblock.ini
-transactions.db

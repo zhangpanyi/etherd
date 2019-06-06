@@ -3,7 +3,7 @@ const BN = require('bn.js');
 const path = require('path');
 const keythereum = require('keythereum');
 const BigNumber = require('bignumber.js');
-const logger = require('../common/logger');
+const logger = require('../logger');
 
 module.exports = {
     toWei: function(amount, decimals) {

@@ -1,7 +1,7 @@
 const request = require('request');
 const rpc = require('node-json-rpc2');
 const geth = require('../../config/geth');
-const logger = require('../common/logger');
+const logger = require('../logger');
 const server = require('../../config/server');
 
 class RPCServer {

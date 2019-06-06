@@ -1,12 +1,16 @@
 
+const fs = require('fs');
 const Nedb = require('nedb-promise');
-const future = require('../common/future');
+const future = require('../future');
 
-class Datastore {
+class Store {
     constructor() {
+        if (!fs.existsSync('db')) {
+            fs.mkdirSync('db');
+        }
         this._db = new Nedb({
-            filename: 'transactions.db',
             autoload: true,
+            filename: 'db/tokens.db',
         });
         this._db.ensureIndex({fieldName: 'txid', unique: true});
     }
@@ -76,4 +80,4 @@ class Datastore {
     }
 }
 
-module.exports = Datastore;
+module.exports = Store;

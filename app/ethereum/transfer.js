@@ -2,10 +2,10 @@ const BN = require('bn.js');
 const Tx = require('ethereumjs-tx');
 const abi = require('./abi');
 const utils = require('./utils');
-const logger = require('../common/logger');
+const logger = require('../logger');
+const future = require('../future');
+const Waitgroup = require('../waitgroup');
 const geth = require('../../config/geth');
-const future = require('../common/future');
-const Waitgroup = require('../common/waitgroup');
 
 class Transfer {
     constructor(web3){
@@ -81,13 +81,13 @@ class Transfer {
         }
      
         // 构造消息
-        let gasPrice, count;
+        let gasPrice, noce;
         [error, gasPrice] = await future(web3.eth.getGasPrice());
         if (error != null) {
             logger.error('Failed to send token, %s', error.message);
             throw error;
         }
-        [error, count] = await future(web3.eth.getTransactionCount(from, "pending"));
+        [error, noce] = await future(this.pendingNonceAt(from));
         if (error != null) {
             logger.error('Failed to send token, %s', error.message);
             throw error;
@@ -95,7 +95,7 @@ class Transfer {
         let rawTransaction = {
             from:       from,
             to:         to,
-            nonce:      web3.utils.toHex(count),
+            nonce:      noce,
             gasLimit:   web3.utils.toHex(geth.gasLimit),
             gasPrice:   web3.utils.toHex(gasPrice),
             value:      web3.utils.toHex(toAmount)
@@ -124,8 +124,19 @@ class Transfer {
             logger.error('Failed to send token, %s', error.message);
             throw error;
         }
-        logger.warn('Transfer %s ETH from %s to %s, hash: %s.', amount, from, to, txid);
+        logger.warn('Transfer %s ETH from %s to %s, hash: %s, noce: %s', amount, from, to, txid, noce);
         return txid;
+    }
+
+    // 获取地址nonce
+    async pendingNonceAt(address) {
+        let error, count;
+        let web3 = this._web3;
+        [error, count] = await future(web3.eth.getTransactionCount(address, "pending"));
+        if (error != null) {
+            throw error;
+        }
+        return web3.utils.toHex(count);
     }
 
     // 发送ERC20代币
@@ -151,21 +162,22 @@ class Transfer {
         }
 
         // 构造消息
-        let gasPrice, count;
+        let gasPrice, noce;
         [error, gasPrice] = await future(web3.eth.getGasPrice());
         if (error != null) {
             logger.error('Failed to send ERC20 token, %s', error.message);
             throw error;
         }
-        [error, count] = await future(web3.eth.getTransactionCount(from, "pending"));
+        [error, noce] = await future(this.pendingNonceAt(from));
         if (error != null) {
-            logger.error('Failed to send ERC20 token, %s', error.message);
+            logger.error('Failed to send token, %s', error.message);
             throw error;
         }
+       
         let rawTransaction = {
             from        : from,
             to          : contractAddress,
-            nonce       : web3.utils.toHex(count),
+            nonce       : noce,
             gasLimit    : web3.utils.toHex(geth.gasLimit),
             gasPrice    : web3.utils.toHex(gasPrice),
             data        : contract.methods.transfer(to, toAmount).encodeABI(),
@@ -194,7 +206,7 @@ class Transfer {
             logger.error('Failed to send ERC20 token, %s', error.message);
             throw error;
         }
-        logger.warn('Transfer %s %s from %s to %s, hash: %s.', amount, symbol, from, to, txid);
+        logger.warn('Transfer %s %s from %s to %s, hash: %s, noce: %s', amount, symbol, from, to, txid, noce);
         return txid;
     }
 

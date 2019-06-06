@@ -1,10 +1,10 @@
 const abi = require('./abi');
 const utils = require('./utils');
 const Notify = require('./notify');
+const Latest = require('./latest');
 const geth = require('../../config/geth');
-const StartBlock = require('./startblock');
-const logger = require('../common/logger');
-const future = require('../common/future');
+const logger = require('../logger');
+const future = require('../future');
 const InputDataDecoder = require('ethereum-input-data-decoder');
 
 class Poller {
@@ -12,7 +12,7 @@ class Poller {
         this._web3 = web3;
         this._ethereum = ethereum;
         this._decoder = new InputDataDecoder(abi);
-        this._lastBlockNumber = StartBlock.getHeigth();
+        this._lastBlockNumber = Latest.getHeigth();
     }
 
     // 解析区块
@@ -50,7 +50,7 @@ class Poller {
             return false;
         }
 
-        StartBlock.updateHeigth(this._lastBlockNumber);
+        Latest.updateHeigth(this._lastBlockNumber);
         this._lastBlockNumber += 1;
         return true;
     }

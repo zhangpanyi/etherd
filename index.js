@@ -1,5 +1,5 @@
 const Server = require('./config/server');
-const logger = require('./app/common/logger');
+const logger = require('./app/logger');
 const Ethereum = require('./app/ethereum/ethereum');
 const RpcServer = require('./app/rpcserver/rpcserver');
 

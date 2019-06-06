@@ -1,14 +1,14 @@
 const Web3 = require('web3');
 const abi = require('./abi');
+const Store = require('./store');
 const EIP20 = require('./eip20');
 const utils = require('./utils');
 const Poller = require('./poller');
 const Notify = require('./notify');
 const Balances = require('./balances');
-const Datastore = require('./datastore');
-const sleep = require('../common/sleep');
-const future = require('../common/future');
-const logger = require('../common/logger');
+const sleep = require('../sleep');
+const future = require('../future');
+const logger = require('../logger');
 const geth = require('../../config/geth');
 const tokens = require('../../config/tokens');
 
@@ -40,7 +40,7 @@ class Ethereum {
         }
 
         // 创建交易数据库
-        this._datastore = new Datastore();
+        this._store = new Store();
 
         // 观察钱包余额
         this._watchWalletBalances();
@@ -88,7 +88,7 @@ class Ethereum {
         }
 
         let error, txs;
-        [error, txs] = await future(this._datastore.txCompleted());
+        [error, txs] = await future(this._store.txCompleted());
         if (error != null) {
             return symbols;
         }
@@ -117,7 +117,7 @@ class Ethereum {
         }
 
         let error, txs;
-        [error, txs] = await future(this._datastore.txCompleted());
+        [error, txs] = await future(this._store.txCompleted());
         if (error != null) {
             return null;
         }
@@ -302,7 +302,7 @@ class Ethereum {
             throw error;
         }
         if (owner == this._eth.address) {
-            await this._datastore.insert(owner, initialAmount, name, decimals, symbol, hash);
+            await this._store.insert(owner, initialAmount, name, decimals, symbol, hash);
         }
         return hash;
     }
@@ -311,7 +311,7 @@ class Ethereum {
     async _watchTransactions() {
         let web3 = this._web3;
         while (this._started) {
-            let txs = await this._datastore.txPending();
+            let txs = await this._store.txPending();
             for (let idx in txs) {
                 let error, tx;
                 let txid = txs[idx].txid;
@@ -321,10 +321,10 @@ class Ethereum {
                 }
 
                 if (!tx.status) {
-                    await this._datastore.updateReceipt(txid, null, false);
+                    await this._store.updateReceipt(txid, null, false);
                 } else {
                     let contractAddress = tx.contractAddress.toLowerCase();
-                    await this._datastore.updateReceipt(txid, contractAddress, true);
+                    await this._store.updateReceipt(txid, contractAddress, true);
                     logger.warn('Deploy ERC20 token success, symbol: %s, contractAddress: %s, txid: %s',
                         txs[idx].symbol, contractAddress, txid);
 
