@@ -71,7 +71,7 @@ class Transfer {
         await future(this._transactions.updateTx(from, txid, nonce));
         callback(true);
 
-        logger.warn('Send raw transaction, hash: %s', txid);
+        logger.warn('Send raw transaction, hash: %s, nonce: %s', txid, nonce);
         return txid;
     }
 
