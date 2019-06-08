@@ -1,5 +1,5 @@
-const sleep = require('../sleep');
-const future = require('../future');
+const sleep = require('./common/sleep');
+const future = require('./common/future');
 
 class Balances {
     constructor(ethereum, symbol) {

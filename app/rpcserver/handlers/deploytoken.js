@@ -1,8 +1,8 @@
 const BN = require('bn.js');
 const validator = require('validator');
 const Utils = require('./utils/utils');
-const utils = require('../../ethereum/utils');
-const future = require('../../future');
+const utils = require('../../common/utils');
+const future = require('../../common/future');
 
 module.exports = async function(ethereum, req, callback) {
    // 校验参数

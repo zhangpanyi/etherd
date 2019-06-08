@@ -1,10 +1,10 @@
 const abi = require('./abi');
-const utils = require('./utils');
 const Notify = require('./notify');
 const Latest = require('./latest');
-const geth = require('../../config/geth');
-const logger = require('../logger');
-const future = require('../future');
+const geth = require('../config/geth');
+const utils = require('./common/utils');
+const logger = require('./common/logger');
+const future = require('./common/future');
 const InputDataDecoder = require('ethereum-input-data-decoder');
 
 class Poller {

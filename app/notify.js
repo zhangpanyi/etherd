@@ -1,5 +1,5 @@
 const request = require('request');
-const logger = require('../logger');
+const logger = require('./common/logger');
  
  function Notify() {
     let symbol      = '';   // 代币符号

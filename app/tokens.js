@@ -1,9 +1,8 @@
-
 const fs = require('fs');
 const Nedb = require('nedb-promise');
-const future = require('../future');
+const future = require('./common/future');
 
-class Store {
+class Tokens {
     constructor() {
         if (!fs.existsSync('db')) {
             fs.mkdirSync('db');
@@ -80,4 +79,4 @@ class Store {
     }
 }
 
-module.exports = Store;
+module.exports = Tokens;

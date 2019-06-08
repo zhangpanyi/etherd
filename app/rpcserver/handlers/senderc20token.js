@@ -1,6 +1,6 @@
 const Utils = require('./utils/utils');
 const validator = require('validator');
-const future = require('../../future');
+const future = require('../../common/future');
 
 module.exports = async function(ethereum, req, callback) {
     // 校验参数

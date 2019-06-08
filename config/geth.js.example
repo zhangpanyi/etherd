@@ -1,4 +1,5 @@
 module.exports = {
+    expire: 60 * 60 * 2, // second
     gasLimit: 420000,
     rawTxGasLimit: 840000,
     confirmations: 12,
