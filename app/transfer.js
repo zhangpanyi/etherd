@@ -77,6 +77,8 @@ class Transfer {
 
     // 发送eth代币
     async sendToken(from, to, amount, privateKey) {
+        logger.info('[transfer] sendToken(from=%s, to=%s, amount=%s)', from, to, amount);
+
         // 检查余额
         let error, balance;
         let web3 = this._web3;
@@ -149,6 +151,8 @@ class Transfer {
 
     // 发送ERC20代币
     async sendERC20Token(symbol, contractAddress, decimals, from, to, amount, privateKey) {
+        logger.info('[transfer] sendERC20Token(from=%s, to=%s, symbol=%s, amount=%s)', from, to, symbol, amount);
+
         // 构造合约
         let error, balance;
         let web3 = this._web3;

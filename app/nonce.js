@@ -1,5 +1,6 @@
 const sleep = require('./common/sleep');
 const future = require('./common/future');
+const logger = require('./common/logger');
 
 class Nonce {
     constructor(web3, transactions) {
@@ -18,10 +19,19 @@ class Nonce {
                 throw error;
             }
 
-            await this._transactions.ensure(account);
-            let txs = await this._transactions.getTxs(account);
-            if (txs.length > 0 && txs[txs.length-1].nonce > count) {
-                count = txs[txs.length-1].nonce;
+            let ok;
+            [error, ok] = await future(this._transactions.ensure(account));
+            if (error != null) {
+                throw error;
+            }
+
+            let txs;
+            [error, txs] = await future(this._transactions.getTxs(account));
+            if (error != null) {
+                throw error;
+            }
+            if (txs.length > 0 && txs[txs.length-1].nonce >= count) {
+                count = txs[txs.length-1].nonce + 1;
             }
 
             if (!this._table.has(account)) {
@@ -32,7 +42,14 @@ class Nonce {
 
     // 获取nonce
     async getNonce(account) {
-        await this.ensure(account);
+        let error, none;
+        const number = Math.floor(Math.random()*10000);
+        logger.debug('%s get nonce begin, numbder: %s', account, number);
+        [error, none] = await future(this.ensure(account));
+        if (error != null) {
+            throw error;
+        }
+
         while (this._table.get(account).locked) {
             await sleep(100); 
         }
@@ -49,12 +66,18 @@ class Nonce {
             state.locked = false;
             self._table.set(account, state);
         };
+        logger.debug('%s get nonce end, numbder: %s, nonce: %s', account, number, state.nonce);
         return [state.nonce, callback];
     }
 
     // 设置无效nonce
     async setInvalid(account, nonce) {
-        await this.ensure(account);
+        let error, none;
+        [error, none] = await future(this.ensure(account));
+        if (error != null) {
+            throw error;
+        }
+
         while (this._table.get(account).locked) {
             await sleep(100); 
         }
