@@ -1,3 +1,4 @@
+const geth = require('../config/geth');
 const sleep = require('./common/sleep');
 const future = require('./common/future');
 
@@ -7,10 +8,13 @@ class Balances {
         this.symbol = symbol;
         this._ethereum = ethereum;
         this._changeSet = new Set();
-        for (let address of this._ethereum.getAccounts()) {
-            this._changeSet.add(address);
+
+        if (geth.balance_cache) {
+            for (let address of this._ethereum.getAccounts()) {
+                this._changeSet.add(address);
+            }
+            this.queryAllBalances();
         }
-        this.queryAllBalances();
     }
 
     // 获取钱包总额
@@ -20,7 +24,9 @@ class Balances {
 
     // 更新地址余额
     updateBalance(address) {
-        this._changeSet.add(address)
+        if (geth.balance_cache) {
+            this._changeSet.add(address);
+        }
     }
 
     // 查询地址余额
