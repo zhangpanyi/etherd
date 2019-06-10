@@ -20,7 +20,7 @@ module.exports = async function(ethereum, req, callback) {
             name: 'to',
             value: null,
             is_valid: function(address) {
-                if (!validator.matches(address, '0x[a-zA-Z0-9]{40}')) {
+                if (!validator.matches(address, '^0x[a-zA-Z0-9]{40}$')) {
                     return false;
                 }
                 this.value = address;

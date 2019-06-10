@@ -1,6 +1,9 @@
 const geth = require('../config/geth');
 const sleep = require('./common/sleep');
 const future = require('./common/future');
+const BigNumber = require('bignumber.js');
+
+const ZERO = new BigNumber(0, 10);
 
 class Balances {
     constructor(ethereum, symbol) {
@@ -45,7 +48,10 @@ class Balances {
                     continue;
                 } else {
                     this._changeSet.delete(address);
-                    this._balances[address] = balance;
+                    const num = new BigNumber(balance, 10);
+                    if (num.comparedTo(ZERO) > 0) {
+                        this._balances[address] = balance;
+                    }
                 }
             }
         }

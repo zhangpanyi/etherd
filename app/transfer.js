@@ -34,13 +34,20 @@ class Transfer {
             logger.error('Failed to send token, %s', error.message);
             throw error;
         }
-        let rawTransaction = {
-            from        : from,
-            nonce       : web3.utils.toHex(nonce),
-            gasLimit    : web3.utils.toHex(web3.utils.toHex(geth.rawTxGasLimit)),
-            gasPrice    : web3.utils.toHex(gasPrice),
-            data        : data,
-        };
+        let rawTransaction;
+        try {
+            rawTransaction = {
+                from        : from,
+                nonce       : web3.utils.toHex(nonce),
+                gasLimit    : web3.utils.toHex(web3.utils.toHex(geth.rawTxGasLimit)),
+                gasPrice    : web3.utils.toHex(gasPrice),
+                data        : data
+            };
+        } catch (error) {
+            logger.error('Failed to make raw transaction, %s', error.message);
+            callback(false);
+            throw error;
+        }
 
         // 签名消息
         let input;
@@ -107,14 +114,21 @@ class Transfer {
             logger.error('Failed to send token, %s', error.message);
             throw error;
         }
-        let rawTransaction = {
-            from:       from,
-            to:         to,
-            nonce:      nonce,
-            gasLimit:   web3.utils.toHex(geth.gasLimit),
-            gasPrice:   web3.utils.toHex(gasPrice),
-            value:      web3.utils.toHex(toAmount)
-        };
+        let rawTransaction;
+        try {
+            rawTransaction = {
+                from:       from,
+                to:         to,
+                nonce:      nonce,
+                gasLimit:   web3.utils.toHex(geth.gasLimit),
+                gasPrice:   web3.utils.toHex(gasPrice),
+                value:      web3.utils.toHex(toAmount)
+            };
+        } catch (error) {
+            logger.error('Failed to make raw transaction, %s', error.message);
+            callback(false);
+            throw error;
+        }
 
         // 签名消息
         let input;
@@ -185,15 +199,21 @@ class Transfer {
             logger.error('Failed to send token, %s', error.message);
             throw error;
         }
-       
-        let rawTransaction = {
-            from        : from,
-            to          : contractAddress,
-            nonce       : nonce,
-            gasLimit    : web3.utils.toHex(geth.gasLimit),
-            gasPrice    : web3.utils.toHex(gasPrice),
-            data        : contract.methods.transfer(to, toAmount).encodeABI(),
-        };
+        let rawTransaction;
+        try {
+            rawTransaction = {
+                from        : from,
+                to          : contractAddress,
+                nonce       : nonce,
+                gasLimit    : web3.utils.toHex(geth.gasLimit),
+                gasPrice    : web3.utils.toHex(gasPrice),
+                data        : contract.methods.transfer(to, toAmount).encodeABI(),
+            };
+        } catch (error) {
+            logger.error('Failed to make raw transaction, %s', error.message);
+            callback(false);
+            throw error;
+        }
 
         // 签名消息
         let input;

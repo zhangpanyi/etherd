@@ -11,7 +11,7 @@ module.exports = async function(ethereum, req, callback) {
             name: 'owner',
             value: null,
             is_valid: function(owner) {
-                if (owner != '' && !validator.matches(owner, '0x[a-zA-Z0-9]{40}')) {
+                if (owner != '' && !validator.matches(owner, '^0x[a-zA-Z0-9]{40}$')) {
                     return false;
                 }
                 this.value = owner;

@@ -65,6 +65,8 @@ class Nonce {
             }
             state.locked = false;
             self._table.set(account, state);
+            logger.debug('%s nonce callback, numbder: %s, nonce: %s, used: %s',
+                account, number, state.nonce, success);
         };
         logger.debug('%s get nonce end, numbder: %s, nonce: %s', account, number, state.nonce);
         return [state.nonce, callback];
