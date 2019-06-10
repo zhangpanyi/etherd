@@ -13,6 +13,7 @@
     "log4js": "^4.0.2",
     "nedb-promise": "^2.0.1",
     "node-json-rpc2": "git+https://github.com/zhangpanyi/node-json-rpc2.git",
+    "object-sizeof": "^1.4.0",
     "request": "^2.88.0",
     "solc": "^0.4.25",
     "validator": "^10.3.0",

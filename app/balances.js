@@ -1,5 +1,7 @@
 const geth = require('../config/geth');
 const sleep = require('./common/sleep');
+const sizeof = require('object-sizeof');
+const logger = require('./common/logger');
 const future = require('./common/future');
 const BigNumber = require('bignumber.js');
 
@@ -16,8 +18,9 @@ class Balances {
             for (let address of this._ethereum.getAccounts()) {
                 this._changeSet.add(address);
             }
-            this.queryAllBalances();
+            this._queryAllBalances();
         }
+        this._printObjectSize();
     }
 
     // 获取钱包总额
@@ -32,8 +35,16 @@ class Balances {
         }
     }
 
+    // 打印对象大小
+    async _printObjectSize() {
+        while (true) {
+            logger.debug('[balances] print object size: %s byte', sizeof(this));
+            await sleep(1000 * 5);
+        }
+    }
+
     // 查询地址余额
-    async queryAllBalances() {
+    async _queryAllBalances() {
         while (true) {
             if (this._changeSet.size == 0) {
                 await sleep(1000);

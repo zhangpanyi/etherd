@@ -1,5 +1,8 @@
 const fs = require("fs"); 
+const sizeof = require('object-sizeof');
 const keythereum = require("keythereum");
+const sleep = require('./common/sleep');
+const logger = require('./common/logger');
 
 class Accounts {
     constructor(dir){
@@ -9,6 +12,7 @@ class Accounts {
             fs.mkdirSync(this.dir);
         }
         this._loadAccounts();
+        this._printObjectSize();
     }
 
     // 是否存在
@@ -93,6 +97,14 @@ class Accounts {
         const keyObject = keythereum.dump('', dk.privateKey, dk.salt, dk.iv, options);
         keythereum.exportToFile(keyObject, this.dir);
         return keyObject;
+    }
+
+    // 打印对象大小
+    async _printObjectSize() {
+        while (true) {
+            logger.debug('[accounts] print object size: %s byte', sizeof(this));
+            await sleep(1000 * 5);
+        }
     }
 }
 
