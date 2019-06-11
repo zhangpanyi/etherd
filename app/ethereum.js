@@ -282,8 +282,9 @@ class Ethereum {
         }
 
         // 发送ERC20代币
+        let contract = this.getContract(token);
         [error, hash] = await future(this._transfer.sendERC20Token(
-            symbol, token.contractAddress, decimals, from, to, amount, privateKey));
+            symbol, contract, decimals, from, to, amount, privateKey));
         if (error != null) {
             throw error;
         }
