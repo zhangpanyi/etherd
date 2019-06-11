@@ -1,7 +1,5 @@
 const fs = require("fs"); 
 const keythereum = require("keythereum");
-const sleep = require('./common/sleep');
-const logger = require('./common/logger');
 
 class Accounts {
     constructor(dir){

@@ -1,6 +1,5 @@
 const BN = require('bn.js');
 const Tx = require('ethereumjs-tx');
-const abi = require('./abi');
 const Audit = require('./audit');
 const Nonce = require('./nonce');
 const Transactions = require('./transactions');
