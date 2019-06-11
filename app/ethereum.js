@@ -21,6 +21,7 @@ class Ethereum {
         this._started = false;
         this._web3 = new Web3();
         this._balances = new Map();
+        this._contracts = new Map();
         this._eip20 = new EIP20('contract/token/EIP20');
 
         // 初始ETH配置
@@ -108,6 +109,16 @@ class Ethereum {
         return this._acounts.has(address);
     }
 
+    // 获取合约
+    getContract(token) {
+        if (this._contracts.has(token.symbol)) {
+            return this._contracts.get(token.symbol)
+        }
+        let contract = new this._web3.eth.Contract(abi, token.contractAddress);
+        this._contracts.set(token.symbol, contract);
+        return contract;
+    }
+
     // 查找代币配置
     async findToken(symbol) {
         if (symbol.toUpperCase() == 'ETH') {
@@ -157,7 +168,6 @@ class Ethereum {
     // 获取代币精度
     async getDecimals(symbol) {
         // 查找代币信息
-        let web3 = this._web3;
         let token = await this.findToken(symbol);
         if (!token) {
             throw new Error('Not found token.')
@@ -168,7 +178,7 @@ class Ethereum {
 
         // 查询代币精度
         let error, decimals;
-        let contract = new web3.eth.Contract(abi, token.contractAddress);
+        let contract = this.getContract(token);
         [error, decimals] = await future(contract.methods.decimals().call());
         if (error != null) {
             throw error;
@@ -216,7 +226,7 @@ class Ethereum {
             throw error;
         } 
 
-        let contract = new web3.eth.Contract(abi, token.contractAddress);
+        let contract = this.getContract(token);
         [error, balance] = await future(contract.methods.balanceOf(address).call());
         if (error != null) {
             throw error;
@@ -272,8 +282,9 @@ class Ethereum {
         }
 
         // 发送ERC20代币
+        let contract = this.getContract(token);
         [error, hash] = await future(this._transfer.sendERC20Token(
-            symbol, token.contractAddress, decimals, from, to, amount, privateKey));
+            symbol, contract, decimals, from, to, amount, privateKey));
         if (error != null) {
             throw error;
         }

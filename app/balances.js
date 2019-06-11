@@ -1,7 +1,5 @@
 const geth = require('../config/geth');
 const sleep = require('./common/sleep');
-const sizeof = require('object-sizeof');
-const logger = require('./common/logger');
 const future = require('./common/future');
 const BigNumber = require('bignumber.js');
 
@@ -20,7 +18,6 @@ class Balances {
             }
             this._queryAllBalances();
         }
-        this._printObjectSize();
     }
 
     // 获取钱包总额
@@ -32,14 +29,6 @@ class Balances {
     updateBalance(address) {
         if (geth.balance_cache) {
             this._changeSet.add(address);
-        }
-    }
-
-    // 打印对象大小
-    async _printObjectSize() {
-        while (true) {
-            logger.debug('[balances] print object size: %s byte', sizeof(this));
-            await sleep(1000 * 5);
         }
     }
 

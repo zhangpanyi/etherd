@@ -164,14 +164,13 @@ class Transfer {
     }
 
     // 发送ERC20代币
-    async sendERC20Token(symbol, contractAddress, decimals, from, to, amount, privateKey) {
+    async sendERC20Token(symbol, contract, decimals, from, to, amount, privateKey) {
         logger.info('[transfer] sendERC20Token(from=%s, to=%s, symbol=%s, amount=%s)', from, to, symbol, amount);
 
         // 构造合约
         let error, balance;
         let web3 = this._web3;
         let toAmount = utils.toWei(amount, decimals);
-        let contract = new web3.eth.Contract(abi, contractAddress);
 
         // 检查余额
         [error, balance] = await future(contract.methods.balanceOf(from).call());
@@ -203,7 +202,7 @@ class Transfer {
         try {
             rawTransaction = {
                 from        : from,
-                to          : contractAddress,
+                to          : contract.address,
                 nonce       : nonce,
                 gasLimit    : web3.utils.toHex(geth.gasLimit),
                 gasPrice    : web3.utils.toHex(gasPrice),

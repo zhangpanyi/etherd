@@ -44,7 +44,7 @@ class Nonce {
     async getNonce(account) {
         let error, none;
         const number = Math.floor(Math.random()*10000);
-        logger.debug('%s get nonce begin, numbder: %s', account, number);
+        logger.debug('[nonce] %s get nonce begin, numbder: %s', account, number);
         [error, none] = await future(this.ensure(account));
         if (error != null) {
             throw error;
@@ -65,10 +65,10 @@ class Nonce {
             }
             state.locked = false;
             self._table.set(account, state);
-            logger.debug('%s nonce callback, numbder: %s, nonce: %s, used: %s',
+            logger.debug('[nonce] %s nonce callback, numbder: %s, nonce: %s, used: %s',
                 account, number, state.nonce, success);
         };
-        logger.debug('%s get nonce end, numbder: %s, nonce: %s', account, number, state.nonce);
+        logger.debug('[nonce] %s get nonce end, numbder: %s, nonce: %s', account, number, state.nonce);
         return [state.nonce, callback];
     }
 
