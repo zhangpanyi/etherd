@@ -113,27 +113,10 @@ class Poller {
             notify.hash = transaction.hash;   
             notify.blockNumber = transaction.blockNumber;
             if (transaction.to && this._ethereum.isMineAccount(transaction.to)) {
-                // 更新余额
-                if (this._ethereum.isMineAccount(transaction.to)) {
-                    this._ethereum.updateWalletBalances(transaction.to, 'ETH');
-                }
-                if (this._ethereum.isMineAccount(transaction.from)) {
-                    this._ethereum.updateWalletBalances(transaction.from, 'ETH');
-                }
-
-                // 筛除转账
-                if (transaction.from.toLowerCase() == token.address.toLowerCase()) {
-                    i++;
-                    continue;
-                }
-
                 // 普通转账
                 notify.symbol = 'ETH';
                 notify.to = transaction.to.toLowerCase();
                 notify.amount = web3.utils.fromWei(transaction.value);
-                logger.warn('Transfer has been received, from: %s, to: %s, symbol: %s, amount: %s, txid: %s',
-                    notify.from, notify.to, notify.symbol, notify.amount, notify.hash);
-                notify.post(token.notify);
             } else {
                 // 合约转账
                 let info, ok;
@@ -142,35 +125,41 @@ class Poller {
                     logger.info('Failed to read contract transfer, %s', error.message);
                     continue;
                 }
-
-                if (ok) {
-                    if (info.from == null) {
-                        info.from = transaction.from;
-                    }
-
-                    // 更新余额
-                    if (this._ethereum.isMineAccount(info.to)) {
-                        this._ethereum.updateWalletBalances(info.to, info.symbol);
-                    }
-                    if (this._ethereum.isMineAccount(info.from)) {
-                        this._ethereum.updateWalletBalances(info.from, info.symbol);
-                    }
-
-                    // 回调通知
-                    if (this._ethereum.isMineAccount(info.to)) {
-                        if (info.from != null) {
-                            notify.from = info.from;
-                        }
-                        notify.symbol = info.symbol;
-                        notify.to = info.to.toLowerCase();
-                        notify.amount = info.amount;
-                        logger.warn('Transfer has been received, from: %s, to: %s, symbol: %s, amount: %s, txid: %s',
-                            notify.from, notify.to, notify.symbol, notify.amount, notify.hash);
-                        notify.post(this._getWalletNotify(transaction.to));
-                    }      
+                if (!ok) {
+                    i++;
+                    continue;
                 }
+                if (info.from == null) {
+                    notify.from = transaction.from;
+                }
+                notify.symbol = info.symbol;
+                notify.to = info.to.toLowerCase();
+                notify.amount = info.amount;
             }
+
             i++;
+
+            // 筛选地址
+            if (!this._ethereum.isMineAccount(notify.to)) {
+                continue;
+            }
+
+            // 更新余额
+            const fromWallet = this._ethereum.isMineAccount(notify.from);
+            if (fromWallet) {
+                this._ethereum.updateWalletBalances(notify.from, notify.symbol);
+            }
+            this._ethereum.updateWalletBalances(notify.to, notify.symbol);
+
+            // 筛除转账
+            if (!fromWallet && notify.from.toLowerCase() !== token.address.toLowerCase()) {
+                logger.warn('Transfer has been received, from: %s, to: %s, symbol: %s, amount: %s, txid: %s',
+                    notify.from, notify.to, notify.symbol, notify.amount, notify.hash);
+                notify.post(token.notify);
+            } else {
+                logger.warn('Transfer has been received but ignore, from: %s, to: %s, symbol: %s, amount: %s, txid: %s',
+                    notify.from, notify.to, notify.symbol, notify.amount, notify.hash);
+            }
         }
     }
 }

@@ -48,8 +48,8 @@ class Ethereum {
         // 创建交易数据库
         this._tokensStore = new Tokens();
 
-        // 观察钱包余额
-        this._watchWalletBalances();
+        // 确保钱包缓存
+        this._ensureWalletBalances();
 
         // 创建账户管理
         const Accounts = require('./accounts');
@@ -355,15 +355,15 @@ class Ethereum {
                     let token = await this.findToken(txs[idx].symbol);
                     notify.post(token.notify);
 
-                    this._watchWalletBalances();
+                    this._ensureWalletBalances();
                 }
             }
             await sleep(1000 * 10);
         }
     }
 
-    // 观察钱包余额
-    async _watchWalletBalances() {
+    // 确保钱包缓存
+    async _ensureWalletBalances() {
         let symbols = await this.getSymbols();
         for (let idx in symbols) {
             let symbol = symbols[idx];
