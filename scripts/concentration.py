@@ -90,7 +90,7 @@ def token_concentration(client, addresses, to):
         address = item['address']
         eth     = item['eth']
         balance = item['balance']
-        if eth > MIN_TRANSFER_FEE and balance > MIN_TOKEN_BALANCE:
+        if eth >= MIN_TRANSFER_FEE and balance >= MIN_TOKEN_BALANCE:
             try:
                 txid = None
                 if TOKEN_SYMBOL == 'ETH':
@@ -102,7 +102,7 @@ def token_concentration(client, addresses, to):
             except Exception as e:
                 logging.warn('Failed to send token, %s', str(e))
         else:
-            if balance > MIN_TOKEN_BALANCE:
+            if balance < MIN_TOKEN_BALANCE:
                 lack_of_gas.append(address)
     return txs, lack_of_gas
 
