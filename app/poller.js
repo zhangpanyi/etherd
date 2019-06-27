@@ -1,3 +1,4 @@
+const BN = require('bn.js');
 const abi = require('./abi');
 const Notify = require('./notify');
 const Latest = require('./latest');
@@ -10,9 +11,15 @@ const InputDataDecoder = require('ethereum-input-data-decoder');
 class Poller {
     constructor(ethereum, web3) {
         this._web3 = web3;
+        this._gasPrice = null;
         this._ethereum = ethereum;
         this._decoder = new InputDataDecoder(abi);
         this._lastBlockNumber = Latest.getHeigth();
+    }
+
+    // 获取Gas价格
+    getGasPrice() {
+        return this._gasPrice;
     }
 
     // 解析区块
@@ -103,9 +110,11 @@ class Poller {
     async _parseTransactions(transactions) {
         let web3 = this._web3;
         let error, transaction;
+        let gasPrices = new Array();
         let token = await this._ethereum.findToken('ETH');
         for (let i = 0; i < transactions.length;) {
             transaction = transactions[i];
+            gasPrices.push(transaction.gasPrice);
 
             // 构造交易信息
             let notify = new Notify();
@@ -161,6 +170,15 @@ class Poller {
                     notify.from, notify.to, notify.symbol, notify.amount, notify.hash);
             }
         }
+
+        if (gasPrices.length <= 0) {
+            return;
+        }
+        gasPrices.sort((a, b) => new BN(a, 10).cmp(new BN(b, 10)));
+        const mid = new BN(gasPrices[parseInt(gasPrices.length / 2)], 10);
+        const sum = gasPrices.reduce((acc, val) => acc.add(new BN(val, 10)), new BN(0, 10));
+        const avg =  sum.divn(gasPrices.length);
+        this._gasPrice = BN.min(mid, avg).toString();
     }
 }
 

@@ -54,13 +54,13 @@ class Ethereum {
         // 创建账户管理
         const Accounts = require('./accounts');
         this._acounts = new Accounts('keystore');
-        
-        // 创建转账模块
-        const Transfer = require('./transfer');
-        this._transfer = new Transfer(this._web3);
 
         // 创建轮询模块
         this._poller = new Poller(this, this._web3);
+
+        // 创建转账模块
+        const Transfer = require('./transfer');
+        this._transfer = new Transfer(this._poller, this._web3);
     }
 
     // 开始轮询

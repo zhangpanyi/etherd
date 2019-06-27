@@ -10,12 +10,29 @@ const Waitgroup = require('./common/waitgroup');
 const geth = require('../config/geth');
 
 class Transfer {
-    constructor(web3){
+    constructor(poller, web3){
         this._web3 = web3;
+        this._poller = poller;
         this._transactions = new Transactions();
         this._nonce = new Nonce(web3, this._transactions);
         this._audit = new Audit(web3, this._transactions, this._nonce);
         this._audit.startPolling();
+    }
+
+    // 获取Gas价格
+    async getGasPrice() {
+        let error, gasPrice;
+        let web3 = this._web3;
+        [error, gasPrice] = await future(web3.eth.getGasPrice());
+        if (error != null) {
+            throw error;
+        }
+
+        const latest = this._poller.getGasPrice();
+        if (latest) {
+            gasPrice = BN.max(new BN(gasPrice, 10), new BN(latest, 10));
+        }
+        return gasPrice.toString();
     }
 
     // 发送原始交易
@@ -23,7 +40,7 @@ class Transfer {
         // 构造消息
         let web3 = this._web3;
         let error, gasPrice, nonce, callback;
-        [error, gasPrice] = await future(web3.eth.getGasPrice());
+        [error, gasPrice] = await future(this.getGasPrice());
         if (error != null) {
             logger.error('Failed to send raw transaction, %s', error.message);
             throw error;
@@ -103,7 +120,7 @@ class Transfer {
      
         // 构造消息
         let gasPrice, nonce, callback;
-        [error, gasPrice] = await future(web3.eth.getGasPrice());
+        [error, gasPrice] = await future(this.getGasPrice());
         if (error != null) {
             logger.error('Failed to send token, %s', error.message);
             throw error;
@@ -187,7 +204,7 @@ class Transfer {
 
         // 构造消息
         let gasPrice, nonce, callback;
-        [error, gasPrice] = await future(web3.eth.getGasPrice());
+        [error, gasPrice] = await future(this.getGasPrice());
         if (error != null) {
             logger.error('Failed to send ERC20 token, %s', error.message);
             throw error;
