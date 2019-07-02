@@ -356,3 +356,35 @@ node index.js
 // 返回结果
 {"id":1,"result":"0xa353c3886ee17b2beccca21037c14c227a77f6b51bed00fa7cfe1c664a08fa4e"}
 ```
+
+### 11. 重新发送交易
+
+**请求参数说明** 
+
+方法名称: `ext_resend`
+
+|参数名|类型|说明|
+|:-----  |:-----|----- |
+|address |string   |地址  |
+|txid | string |交易ID |
+
+**返回参数说明** 
+
+|类型|说明|
+|:-----|----- |
+|string   |txid  |
+
+**示例代码**
+
+```
+// 请求示例
+{
+    "id": "1",
+    "jsonrpc": "2.0",
+    "method": "ext_resend",
+    "params": ["0xb49446a6379412222330b7739149b70b1abf113d", "0x00a71ab350553bb4e8c3b1929f620134c4b1c399264ec4e02fbf89fcfef703e9"]
+}
+
+// 返回结果
+{"id":"1","result":"0x87ef5c5757f087b482ec1ac0f5271e71a19d116ca2929addf6bc37845f899086"}
+```
