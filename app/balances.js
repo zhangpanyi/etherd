@@ -1,6 +1,6 @@
 const geth = require('../config/geth');
 const sleep = require('./common/sleep');
-const future = require('./common/future');
+const nothrow = require('./common/nothrow');
 const BigNumber = require('bignumber.js');
 
 const ZERO = new BigNumber(0, 10);
@@ -42,7 +42,7 @@ class Balances {
 
             for (let address of this._changeSet) {
                 let error, balance;
-                [error, balance] = await future(this._ethereum.getBalance(address, this.symbol));
+                [error, balance] = await nothrow(this._ethereum.getBalance(address, this.symbol));
                 if (error != null) {
                     await sleep(1000 * 5);
                     continue;

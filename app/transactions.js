@@ -1,7 +1,7 @@
 
 const fs = require('fs');
 const Nedb = require('nedb-promise');
-const future = require('./common/future');
+const nothrow = require('./common/nothrow');
 
 class Transactions {
     constructor() {
@@ -18,7 +18,7 @@ class Transactions {
     // 获取全部记录
     async all() {
         let error, result;
-        [error, result] = await future(this._db.find({}));
+        [error, result] = await nothrow(this._db.find({}));
         if (error != null) {
             throw error;
         }
@@ -28,7 +28,7 @@ class Transactions {
     // 确保账户存在
     async ensure(account) {
         let error, count;
-        [error, count] = await future(this._db.count({account: account}));
+        [error, count] = await nothrow(this._db.count({account: account}));
         if (error != null) {
             throw error;
         }
@@ -38,7 +38,7 @@ class Transactions {
         }
 
         let result;
-        [error, result] = await future(this._db.insert({
+        [error, result] = await nothrow(this._db.insert({
             account:        account,
             transactions:   [],
         }));
@@ -51,7 +51,7 @@ class Transactions {
     // 获取用户事务记录
     async getTxs(account) {
         let error, result;
-        [error, result] = await future(this._db.find({account: account}));
+        [error, result] = await nothrow(this._db.find({account: account}));
         if (error != null) {
             throw error;
         }
@@ -64,7 +64,7 @@ class Transactions {
     // 更新账户事务记录
     async updateTx(account, txid, nonce) {
         let error, txs;
-        [error, txs] = await future(this.getTxs(account));
+        [error, txs] = await nothrow(this.getTxs(account));
         if (error != null) {
             throw error;
         }
@@ -73,7 +73,7 @@ class Transactions {
         txs.push({txid: txid, nonce: nonce, date: date});
 
         let result;
-        [error, result] = await future(this._db.update(
+        [error, result] = await nothrow(this._db.update(
             {account: account},
             {$set: {transactions: txs}},
             {},
@@ -87,7 +87,7 @@ class Transactions {
     // 删除指定事务记录
     async deleteTx(account, nonce) {
         let error, txs;
-        [error, txs] = await future(this.getTxs(account));
+        [error, txs] = await nothrow(this.getTxs(account));
         if (error != null) {
             throw error;
         }
@@ -101,7 +101,7 @@ class Transactions {
         }
 
         let result;
-        [error, result] = await future(this._db.update(
+        [error, result] = await nothrow(this._db.update(
             {account: account},
             {$set: {transactions: txs}},
             {},
@@ -115,7 +115,7 @@ class Transactions {
     // 删除账户事务记录
     async deleteTxs(account, nonce) {
         let error, txs;
-        [error, txs] = await future(this.getTxs(account));
+        [error, txs] = await nothrow(this.getTxs(account));
         if (error != null) {
             throw error;
         }
@@ -129,7 +129,7 @@ class Transactions {
         }
 
         let result;
-        [error, result] = await future(this._db.update(
+        [error, result] = await nothrow(this._db.update(
             {account: account},
             {$set: {transactions: txs}},
             {},

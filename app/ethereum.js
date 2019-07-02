@@ -7,7 +7,7 @@ const Notify = require('./notify');
 const Balances = require('./balances');
 const utils = require('./common/utils');
 const sleep = require('./common/sleep');
-const future = require('./common/future');
+const nothrow = require('./common/nothrow');
 const logger = require('./common/logger');
 const geth = require('../config/geth');
 const tokens = require('../config/tokens');
@@ -94,7 +94,7 @@ class Ethereum {
         }
 
         let error, txs;
-        [error, txs] = await future(this._tokensStore.txCompleted());
+        [error, txs] = await nothrow(this._tokensStore.txCompleted());
         if (error != null) {
             return symbols;
         }
@@ -133,7 +133,7 @@ class Ethereum {
         }
 
         let error, txs;
-        [error, txs] = await future(this._tokensStore.txCompleted());
+        [error, txs] = await nothrow(this._tokensStore.txCompleted());
         if (error != null) {
             return null;
         }
@@ -179,7 +179,7 @@ class Ethereum {
         // 查询代币精度
         let error, decimals;
         let contract = this.getContract(token);
-        [error, decimals] = await future(contract.methods.decimals().call());
+        [error, decimals] = await nothrow(contract.methods.decimals().call());
         if (error != null) {
             throw error;
         }
@@ -208,7 +208,7 @@ class Ethereum {
         let error, balance;
         let web3 = this._web3;
         if (symbol.toUpperCase() == 'ETH') {
-            [error, balance] = await future(web3.eth.getBalance(address, 'latest'));
+            [error, balance] = await nothrow(web3.eth.getBalance(address, 'latest'));
             if (error != null) {
                 throw error;
             }
@@ -221,13 +221,13 @@ class Ethereum {
         }
 
         let decimals;
-        [error, decimals] = await future(this.getDecimals(symbol));
+        [error, decimals] = await nothrow(this.getDecimals(symbol));
         if (error != null) {
             throw error;
         } 
 
         let contract = this.getContract(token);
-        [error, balance] = await future(contract.methods.balanceOf(address).call());
+        [error, balance] = await nothrow(contract.methods.balanceOf(address).call());
         if (error != null) {
             throw error;
         }
@@ -245,7 +245,7 @@ class Ethereum {
         }
 
         let error, hash;
-        [error, hash] = await future(this._transfer.sendToken(
+        [error, hash] = await nothrow(this._transfer.sendToken(
             from, to, amount, privateKey));
         if (error != null) {
             throw error;
@@ -267,7 +267,7 @@ class Ethereum {
 
         // 获取代币精度
         let error, decimals, hash;
-        [error, decimals] = await future(this.getDecimals(symbol));
+        [error, decimals] = await nothrow(this.getDecimals(symbol));
         if (error != null) {
             throw error;
         }
@@ -283,7 +283,7 @@ class Ethereum {
 
         // 发送ERC20代币
         let contract = this.getContract(token);
-        [error, hash] = await future(this._transfer.sendERC20Token(
+        [error, hash] = await nothrow(this._transfer.sendERC20Token(
             symbol, contract, decimals, from, to, amount, privateKey));
         if (error != null) {
             throw error;
@@ -312,7 +312,7 @@ class Ethereum {
         }
 
         let deploy = this._eip20.deploy(owner, initialAmount, name, decimals, symbol);
-        [error, hash] = await future(
+        [error, hash] = await nothrow(
             this._transfer.sendRawTransaction(deploy, this._eth.address, this._eth.privateKey));
         if (error != null) {
             throw error;
@@ -331,7 +331,7 @@ class Ethereum {
             for (let idx in txs) {
                 let error, tx;
                 let txid = txs[idx].txid;
-                [error, tx] = await future(web3.eth.getTransactionReceipt(txid));
+                [error, tx] = await nothrow(web3.eth.getTransactionReceipt(txid));
                 if (error != null || tx == null) {
                     continue;
                 }

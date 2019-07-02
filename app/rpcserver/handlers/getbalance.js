@@ -1,6 +1,6 @@
 const validator = require('validator');
 const Utils = require('./utils/utils');
-const future = require('../../common/future');
+const nothrow = require('../../common/nothrow');
 
 module.exports = async function(ethereum, req, callback) {
     // 校验参数
@@ -38,7 +38,7 @@ module.exports = async function(ethereum, req, callback) {
     
     // 获取余额
     let error, balance;
-    [error, balance] = await future(ethereum.getBalance(rule[0].value, rule[1].value));
+    [error, balance] = await nothrow(ethereum.getBalance(rule[0].value, rule[1].value));
     if (error != null) {
         error = {code: -32000, message: error.message};
         callback(error, undefined);

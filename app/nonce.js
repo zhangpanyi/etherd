@@ -1,6 +1,6 @@
 const sleep = require('./common/sleep');
-const future = require('./common/future');
 const logger = require('./common/logger');
+const nothrow = require('./common/nothrow');
 
 class Nonce {
     constructor(web3, transactions) {
@@ -14,19 +14,19 @@ class Nonce {
         if (!this._table.has(account)) {
             let error, count;
             const web3 = this._web3;
-            [error, count] = await future(web3.eth.getTransactionCount(account, 'latest'));
+            [error, count] = await nothrow(web3.eth.getTransactionCount(account, 'latest'));
             if (error != null) {
                 throw error;
             }
 
             let ok;
-            [error, ok] = await future(this._transactions.ensure(account));
+            [error, ok] = await nothrow(this._transactions.ensure(account));
             if (error != null) {
                 throw error;
             }
 
             let txs;
-            [error, txs] = await future(this._transactions.getTxs(account));
+            [error, txs] = await nothrow(this._transactions.getTxs(account));
             if (error != null) {
                 throw error;
             }
@@ -45,7 +45,7 @@ class Nonce {
         let error, none;
         const number = Math.floor(Math.random()*10000);
         logger.debug('[nonce] %s get nonce begin, numbder: %s', account, number);
-        [error, none] = await future(this.ensure(account));
+        [error, none] = await nothrow(this.ensure(account));
         if (error != null) {
             throw error;
         }
@@ -75,7 +75,7 @@ class Nonce {
     // 设置无效nonce
     async setInvalid(account, nonce) {
         let error, none;
-        [error, none] = await future(this.ensure(account));
+        [error, none] = await nothrow(this.ensure(account));
         if (error != null) {
             throw error;
         }
@@ -87,7 +87,7 @@ class Nonce {
         state.nonce = nonce;
         state.locked = true;
         this._table.set(account, state);
-        await future(this._transactions.deleteTxs(account, nonce));
+        await nothrow(this._transactions.deleteTxs(account, nonce));
         state.locked = false;
         this._table.set(account, state);
     }

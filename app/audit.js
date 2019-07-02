@@ -1,7 +1,7 @@
+const geth = require('../config/geth');
 const sleep = require('./common/sleep');
 const logger = require('./common/logger');
-const future = require('./common/future');
-const geth = require('../config/geth');
+const nothrow = require('./common/nothrow');
 
 const STATWAIT = 0;
 const STATFAIL = 1;
@@ -18,7 +18,7 @@ class Audit {
     // 检查凭据
     async checkReceipt(txid, createdAt) {
         let error, tx;
-        [error, tx] = await future(this._web3.eth.getTransactionReceipt(txid));
+        [error, tx] = await nothrow(this._web3.eth.getTransactionReceipt(txid));
         if (error != null) {
             throw error;
         }
@@ -55,7 +55,7 @@ class Audit {
                 for (let j = 0; j < account.transactions.length;) {
                     let error, stat;
                     const tx = account.transactions[j];
-                    [error, stat] = await future(this.checkReceipt(tx.txid, tx.date));
+                    [error, stat] = await nothrow(this.checkReceipt(tx.txid, tx.date));
                     if (error != null) {
                         logger.info('[audit] Failed to get transaction receipt, %s', error.message);
                         continue;
@@ -64,11 +64,11 @@ class Audit {
                     if (stat == STATWAIT) {
                         break
                     } else if (stat == STATFAIL) {
-                        await future(this._nonce.setInvalid(account.account, tx.nonce));
+                        await nothrow(this._nonce.setInvalid(account.account, tx.nonce));
                         logger.error('[audit] Audit failure, account: %s, txid: %s, nonce: %s', account.account, tx.txid, tx.nonce);
                         break;
                     }
-                    await future(this._transactions.deleteTx(account.account, tx.nonce));
+                    await nothrow(this._transactions.deleteTx(account.account, tx.nonce));
                     logger.info('[audit] Audit success, account: %s, txid: %s, nonce: %s', account.account, tx.txid, tx.nonce);
                     j++;
                 }

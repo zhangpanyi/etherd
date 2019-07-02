@@ -5,7 +5,7 @@ const Nonce = require('./nonce');
 const Transactions = require('./transactions');
 const utils = require('./common/utils');
 const logger = require('./common/logger');
-const future = require('./common/future');
+const nothrow = require('./common/nothrow');
 const Waitgroup = require('./common/waitgroup');
 const geth = require('../config/geth');
 
@@ -23,7 +23,7 @@ class Transfer {
     async getGasPrice() {
         let error, gasPrice;
         let web3 = this._web3;
-        [error, gasPrice] = await future(web3.eth.getGasPrice());
+        [error, gasPrice] = await nothrow(web3.eth.getGasPrice());
         if (error != null) {
             throw error;
         }
@@ -40,12 +40,12 @@ class Transfer {
         // 构造消息
         let web3 = this._web3;
         let error, gasPrice, nonce, callback;
-        [error, gasPrice] = await future(this.getGasPrice());
+        [error, gasPrice] = await nothrow(this.getGasPrice());
         if (error != null) {
             logger.error('Failed to send raw transaction, %s', error.message);
             throw error;
         }
-        [error, [nonce, callback]] = await future(this._nonce.getNonce(from));
+        [error, [nonce, callback]] = await nothrow(this._nonce.getNonce(from));
         if (error != null) {
             logger.error('Failed to send token, %s', error.message);
             throw error;
@@ -67,7 +67,7 @@ class Transfer {
 
         // 签名消息
         let input;
-        [error, input] = await future(this._signTransaction(rawTransaction, privateKey));
+        [error, input] = await nothrow(this._signTransaction(rawTransaction, privateKey));
         if (error != null) {
             logger.error('Failed to sign message, %s', error.message);
             callback(false);
@@ -91,7 +91,7 @@ class Transfer {
             throw error;
         }
 
-        await future(this._transactions.updateTx(from, txid, nonce));
+        await nothrow(this._transactions.updateTx(from, txid, nonce));
         callback(true);
 
         logger.warn('Send raw transaction, hash: %s, nonce: %s', txid, nonce);
@@ -105,7 +105,7 @@ class Transfer {
         // 检查余额
         let error, balance;
         let web3 = this._web3;
-        [error, balance] = await future(web3.eth.getBalance(from, 'latest'));
+        [error, balance] = await nothrow(web3.eth.getBalance(from, 'latest'));
         if (error != null) {
             logger.error('Failed to send token, getBalance, %s', error.message);
             throw error;
@@ -120,12 +120,12 @@ class Transfer {
      
         // 构造消息
         let gasPrice, nonce, callback;
-        [error, gasPrice] = await future(this.getGasPrice());
+        [error, gasPrice] = await nothrow(this.getGasPrice());
         if (error != null) {
             logger.error('Failed to send token, %s', error.message);
             throw error;
         }
-        [error, [nonce, callback]] = await future(this._nonce.getNonce(from));
+        [error, [nonce, callback]] = await nothrow(this._nonce.getNonce(from));
         if (error != null) {
             logger.error('Failed to send token, %s', error.message);
             throw error;
@@ -148,7 +148,7 @@ class Transfer {
 
         // 签名消息
         let input;
-        [error, input] = await future(this._signTransaction(rawTransaction, privateKey));
+        [error, input] = await nothrow(this._signTransaction(rawTransaction, privateKey));
         if (error != null) {
             logger.error('Failed to sign message, %s', error.message);
             callback(false);
@@ -172,7 +172,7 @@ class Transfer {
             throw error;
         }
 
-        await future(this._transactions.updateTx(from, txid, nonce));
+        await nothrow(this._transactions.updateTx(from, txid, nonce));
         callback(true);
 
         logger.warn('Transfer %s ETH from %s to %s, hash: %s, nonce: %s', amount, from, to, txid, nonce);
@@ -189,7 +189,7 @@ class Transfer {
         let toAmount = utils.toWei(amount, decimals);
 
         // 检查余额
-        [error, balance] = await future(contract.methods.balanceOf(from).call());
+        [error, balance] = await nothrow(contract.methods.balanceOf(from).call());
         if (error != null) {
             logger.error('Failed to send ERC20 token, balanceOf, %s', error.message);
             throw error;
@@ -204,12 +204,12 @@ class Transfer {
 
         // 构造消息
         let gasPrice, nonce, callback;
-        [error, gasPrice] = await future(this.getGasPrice());
+        [error, gasPrice] = await nothrow(this.getGasPrice());
         if (error != null) {
             logger.error('Failed to send ERC20 token, %s', error.message);
             throw error;
         }
-        [error, [nonce, callback]] = await future(this._nonce.getNonce(from));
+        [error, [nonce, callback]] = await nothrow(this._nonce.getNonce(from));
         if (error != null) {
             logger.error('Failed to send token, %s', error.message);
             throw error;
@@ -232,7 +232,7 @@ class Transfer {
 
         // 签名消息
         let input;
-        [error, input] = await future(this._signTransaction(rawTransaction, privateKey));
+        [error, input] = await nothrow(this._signTransaction(rawTransaction, privateKey));
         if (error != null) {
             logger.error('Failed to sign message, %s', error.message);
             callback(false);
@@ -256,7 +256,7 @@ class Transfer {
             throw error;
         }
 
-        await future(this._transactions.updateTx(from, txid, nonce));
+        await nothrow(this._transactions.updateTx(from, txid, nonce));
         callback(true);
 
         logger.warn('Transfer %s %s from %s to %s, hash: %s, nonce: %s', amount, symbol, from, to, txid, nonce);

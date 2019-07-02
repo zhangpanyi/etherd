@@ -5,7 +5,7 @@ const Latest = require('./latest');
 const geth = require('../config/geth');
 const utils = require('./common/utils');
 const logger = require('./common/logger');
-const future = require('./common/future');
+const nothrow = require('./common/nothrow');
 const InputDataDecoder = require('ethereum-input-data-decoder');
 
 class Poller {
@@ -27,7 +27,7 @@ class Poller {
         // 获取区块高度
         let web3 = this._web3;
         let error, blockNumber, block;
-        [error, blockNumber] = await future(web3.eth.getBlockNumber());
+        [error, blockNumber] = await nothrow(web3.eth.getBlockNumber());
         if (error != null) {
             logger.info('Failed to call `getBlockNumber`, %s', error.message);
             return false;
@@ -43,7 +43,7 @@ class Poller {
         logger.debug('Current reading block number: %d', this._lastBlockNumber);
 
         // 获取区块信息
-        [error, block] = await future(web3.eth.getBlock(this._lastBlockNumber, true));
+        [error, block] = await nothrow(web3.eth.getBlock(this._lastBlockNumber, true));
         if (error != null) {
             logger.info('Failed to call `getBlock`, %s', error.message);
             return false;
@@ -51,7 +51,7 @@ class Poller {
 
         // 解析交易信息
         let result;
-        [error, result] = await future(this._parseTransactions(block.transactions));
+        [error, result] = await nothrow(this._parseTransactions(block.transactions));
         if (error != null) {
             logger.info('Failed to parse transactions, %s', error.message);
             return false;
@@ -85,7 +85,7 @@ class Poller {
 
         // 获取代币精度
         let error, decimals;
-        [error, decimals] = await future(this._ethereum.getDecimals(token.symbol));
+        [error, decimals] = await nothrow(this._ethereum.getDecimals(token.symbol));
         if (error) {
             logger.info('Failed to get decimals, %s', error.message);
             return [undefined, false];
@@ -129,7 +129,7 @@ class Poller {
             } else {
                 // 合约转账
                 let info, ok;
-                [error, [info, ok]] = await future(this._readContractTransfer(transaction.to, transaction.input));
+                [error, [info, ok]] = await nothrow(this._readContractTransfer(transaction.to, transaction.input));
                 if (error) {
                     logger.info('Failed to read contract transfer, %s', error.message);
                     continue;
