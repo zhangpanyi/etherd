@@ -1,5 +1,5 @@
 # etherd
-etherd 提供以太坊代币(包括ERC20代币)转账、收款通知功能以及发行代币等功能。您可以使用它轻松地将以太坊上的代币接入到自己的系统里面。另外还提供了JSON RPC API转发功能，可以直接调用ethereum 节点支持的JSON RPC API。
+etherd 提供以太坊代币(包括ERC20代币)转账、收款通知功能以及发行代币等功能。你可以使用 [JSON-RPC2 API](docs/api.md) 轻松地将以太坊上的代币接入到自己的系统里面。另外还提供了以太坊节点的 [JSON-RPC API](https://github.com/ethereum/wiki/wiki/JSON-RPC) 转发功能，可以直接调用节点支持的 [JSON RPC API](https://github.com/ethereum/wiki/wiki/JSON-RPC)。
 
 > 测试环境：node.js v8.10.0
 
@@ -7,8 +7,7 @@ etherd 提供以太坊代币(包括ERC20代币)转账、收款通知功能以及
 ```
 git clone https://github.com/zhangpanyi/etherd.git
 cd etherd
-npm install
-node index.js
+npm install && npm start
 ```
 
 ## 2. 配置文件
@@ -35,356 +34,47 @@ node index.js
     ETH: {
         keystore: 'config/test.keystore',                               // 钱包路径
         unlockPassword: '123456',                                       // 钱包解锁密码
-        notify: 'http:/127.0.0.1/webhooks/eth'                      // 收款通知地址
+        notify: 'http:/127.0.0.1/webhooks/eth'                          // 收款通知地址
     },
     BOKKY: {
         keystore: 'config/test.keystore',                               // 钱包路径
         unlockPassword: '123456',                                       // 钱包解锁密码
         contractAddress: '0x583cbBb8a8443B38aBcC0c956beCe47340ea1367',  // 代币合约地址
-        notify: 'http://127.0.0.1/webhooks/bokky'                   // 收款通知地址
+        notify: 'http://127.0.0.1/webhooks/bokky'                       // 收款通知地址
     }
 }
 ```
 
-## 3. 扩展接口
+## 3. 问题和解决思路
 
-### 1. 创建账号
+### 1. 充值监控
+交易所通常需要给每个用户都生成一个以太坊地址，然后再通过地址判断充值者的身份信息。etherd 使用了轮询区块的方式来获取链上 Transactions，筛选出交易所地址相关的 Transaction 后再使用 HTTP POST 的方式通知交易所服务。
 
-**请求参数说明** 
+使用轮询区块的方式可以保证服务停止再重启后不丢失中间产生的 Transaction 信息，因为每次轮询后当前使用的 Block Height 都会保存到文件然后再 +1，当服务重启后会根据最后记录的 Block Height 继续往下轮询。
 
-方法名称: `ext_newAccount`
-
-**返回参数说明** 
-
-|类型|说明|
-|:-----|----- |
-|string  |账号地址  |
-
-**示例代码**
-
+另外 etherd 还处理掉了链上 ETH TOKEN 转账和 ERC20 TOKEN 转账之间的差异，使得推送给第三方应用的通知消息格式一致:
 ```
-// 请求示例
 {
-    "jsonrpc": "2.0",
-    "id": 1,
-    "method": "ext_newAccount",
-    "params": []
+  "symbol": "ETH",
+  "from": "0x0000000000000000000000000000000000000000",
+  "to": "0x0000000000000000000000000000000000000000",
+  "hash": "0x2357d59529140df538af447c3d638efa6c606025ad13ed8c171a0e801519a3e8",
+  "amount": "0",
+  "blockNumber": 0
 }
-
-// 返回结果
-{"id":"1","result":"0x3d161da7ec10116ffb61a944775ee546fa61a82f"}
 ```
 
-### 2. 获取账号列表
+### 2. nonce生成
+以太坊要求一个地址的每笔 Transaction 有一个唯一且连续的 nonce，每个节点将根据 nonce 顺序严格执行来自一个地址的 Transaction。所以发送 Transaction 时不能设置相同的nonce，并且要保证 nonce 是连续的，否则将会导致不符合预期的结果。
 
-**请求参数说明** 
+网上的方案通常是使用 [web3.eth.getTransactionCount(address, "pending")](https://web3js.readthedocs.io/en/1.0/web3-eth.html#gettransactioncount) 接口获取 nonce  值，但是在实际使用中**并不可靠**，经常会出现问题。etherd 使用以下方式提供相对可靠的 nonce 生成方案，经长期测试几乎没有出现过问题。
+1. 发送 transaction 时本地累加 nonce，并将每笔 transaction  的 `txid` 和 `nonce` 信息顺序保存到内存和文件。
+2. 轮询已经发出的 transaction，如果已被打包进区块则将这笔 transaction 从内存和文件中删除。
+3. 如果发现超时(自定义时间)未完成的 transaction 则发出警告并手动处理：设置相同的 nonce 再将 transaction 重发一次。否则后续产生的 transaction 将无法打包。
+4. 启动服务时调用 `web3.eth.getTransactionCount(address, "latest")` 获取 count，然后对比保存到文件中的最大 nonce 值，取两者中值最大的作为下一笔 transaction 的 nonce 值。
 
-方法名称: `ext_getAccounts`
-
-**返回参数说明** 
-
-|类型|说明|
-|:-----|----- |
-|array of string  |账号列表  |
-
-**示例代码**
-
+### 3. GAS价格计算
+web3.js 提供了 [web3.eth.getGasPrice()](https://web3js.readthedocs.io/en/1.0/web3-eth.html#getgasprice) 接口用于获取 GAS 的价格。但有一次创建 transaction 的时候给了一个较低的 GAS 价格，导致这个 transaction 迟迟不被打包进区块，并且影响到了后续创建的 transactions。所以 etherd 自定义了 GAS 价格的计算方式:
 ```
-// 请求示例
-{
-    "jsonrpc": "2.0",
-    "id": 1,
-    "method": "ext_getAccounts",
-    "params": []
-}
-
-// 返回结果
-{"id":"1","result":["0x9d01c6ca1113ce64438d6aad1e67c4e22b708fad","0xae381a76fd1fcb52476efa1034f5309bf5f6e034","0x6a4897cf6980295c3e886af78f0c25ba5ec0822d","0xced0e6f8ad1e43bba8952c0c4ea721fe6ff52cd2","0x2073a02d4407e28e169a1ba858c806991a45f8d8","0x35dde9d0c0f20a224eddfa7b564f51d2a96fd395","0x9d607976f99b9154d9912a02be5ebeb9bcf2de7a","0xdde7d28d6636a8037dd347af7a02ccfa8ca76361","0x46c6616115608512b73f557d9df7c2d2f1c6bbc2","0xbbcb86cbc24e0dfa01c80f1c62bf66b3c9ada33c","0x3d161da7ec10116ffb61a944775ee546fa61a82f"]}
-```
-
-### 3. 获取余额
-
-**请求参数说明** 
-
-方法名称: `ext_getBalance`
-
-|参数名|类型|说明|
-|:-----  |:-----|----- |
-|address |string   |账户地址  |
-|symbol |string   |代币符号 |
-
-**返回参数说明** 
-
-|类型|说明|
-|:-----|----- |
-|string   |余额  |
-
-**示例代码**
-
-```
-// 请求示例
-{
-    "jsonrpc": "2.0",
-    "id": 1,
-    "method": "ext_getBalance",
-    "params": ["0xc299ac73687fa17e10a206c47dc0e81b8c7828e6", "ETH"]
-}
-
-// 返回结果
-{"id":1,"result":"0.23"}
-```
-
-### 4. 发送ETH代币
-
-**请求参数说明** 
-
-方法名称: `ext_sendToken`
-
-|参数名|类型|说明|
-|:-----  |:-----|----- |
-|to |string   |对方地址  |
-|amount |string   |转账金额  |
-
-**返回参数说明** 
-
-|类型|说明|
-|:-----|----- |
-|string   |txid  |
-
-**示例代码**
-
-```
-// 请求示例
-{
-    "jsonrpc": "2.0",
-    "id": 1,
-    "method": "ext_sendToken",
-    "params": ["0xc299ac73687fa17e10a206c47dc0e81b8c7828e6", "0.1"]
-}
-
-// 返回结果
-{"id":1,"result":"0xa353c3886ee17b2beccca21037c14c227a77f6b51bed00fa7cfe1c664a08fa4e"}
-```
-
-### 5. 发送ERC20代币
-
-**请求参数说明** 
-
-方法名称: `ext_sendERC20Token`
-
-|参数名|类型|说明|
-|:-----  |:-----|----- |
-|symbol |string   |代币符号  |
-|to |string   |对方地址  |
-|amount |string   |转账金额  |
-
-**返回参数说明** 
-
-|类型|说明|
-|:-----|----- |
-|string   |txid  |
-
-**示例代码**
-
-```
-// 请求示例
-{
-    "jsonrpc": "2.0",
-    "id": 1,
-    "method": "ext_sendERC20Token",
-    "params": ["BOKKY", "0xc299ac73687fa17e10a206c47dc0e81b8c7828e6", "0.1"]
-}
-
-// 返回结果
-{"id":1,"result":"0xa353c3886ee17b2beccca21037c14c227a77f6b51bed00fa7cfe1c664a08fa4e"}
-```
-
-### 6. 获取钱包余额
-
-**请求参数说明** 
-
-方法名称: `ext_getWalletBalance`
-
-|参数名|类型|说明|
-|:-----  |:-----|----- |
-|symbol |string   | 代币符号  |
-
-**返回参数说明** 
-
-|类型|说明|
-|:-----|----- |
-|array   |地址代币余额  |
-
-**示例代码**
-
-```
-// 请求示例
-{
-    "jsonrpc": "2.0",
-    "id": 1,
-    "method": "ext_getWalletBalance",
-    "params": []
-}
-
-// 返回结果
-{"id":"1","result":[{"address":"0x5eebc1ca9918b2e23ec2f7f9353be24f2550b395","balance":"0"},{"address":"0xd6f366cbac08cfb985effd36dd899bc69b0c45b6","balance":"0"}]}
-```
-
-### 7. 获取主钱包地址
-
-**请求参数说明** 
-
-方法名称: `ext_getMainAddress`
-
-|参数名|类型|说明|
-|:-----  |:-----|----- |
-|symbol |string   |代币符号  |
-
-**示例代码**
-
-```
-// 请求示例
-{
-    "jsonrpc": "2.0",
-    "id": 1,
-    "method": "ext_getMainAddress",
-    "params": ["ETH"]
-}
-
-// 返回结果
-{"id":1,"result":"0xa353c3886ee17b2beccca21037c14c227a77f6b51bed00fa7cfe1c664a08fa4e"}
-```
-
-### 8. 从指定地址发送ETH代币
-
-**请求参数说明** 
-
-方法名称: `ext_sendTokenFrom`
-
-|参数名|类型|说明|
-|:-----  |:-----|----- |
-|from | strimg |来源地址 |
-|to |string   |对方地址  |
-|amount |string   |转账金额  |
-
-**返回参数说明** 
-
-|类型|说明|
-|:-----|----- |
-|string   |txid  |
-
-**示例代码**
-
-```
-// 请求示例
-{
-    "jsonrpc": "2.0",
-    "id": 1,
-    "method": "ext_sendTokenFrom",
-    "params": ["0x6e54b67bfeb09b35be20049cf9460cc4db9cbf2c", "0xc299ac73687fa17e10a206c47dc0e81b8c7828e6", "0.1"]
-}
-
-// 返回结果
-{"id":1,"result":"0xa353c3886ee17b2beccca21037c14c227a77f6b51bed00fa7cfe1c664a08fa4e"}
-```
-
-### 9. 从指定地址发送ERC20代币
-
-**请求参数说明** 
-
-方法名称: `ext_sendERC20TokenFrom`
-
-|参数名|类型|说明|
-|:-----  |:-----|----- |
-|symbol |string   |代币符号  |
-|from | strimg |来源地址 |
-|to |string   |对方地址  |
-|amount |string   |转账金额  |
-
-**返回参数说明** 
-
-|类型|说明|
-|:-----|----- |
-|string   |txid  |
-
-**示例代码**
-
-```
-// 请求示例
-{
-    "jsonrpc": "2.0",
-    "id": 1,
-    "method": "ext_sendERC20TokenFrom",
-    "params": ["BOKKY", "0x6e54b67bfeb09b35be20049cf9460cc4db9cbf2c", "0xc299ac73687fa17e10a206c47dc0e81b8c7828e6", "0.1"]
-}
-
-// 返回结果
-{"id":1,"result":"0xa353c3886ee17b2beccca21037c14c227a77f6b51bed00fa7cfe1c664a08fa4e"}
-```
-
-### 10. 发行ERC20代币
-
-**请求参数说明** 
-
-方法名称: `ext_deployToken`
-
-|参数名|类型|说明|
-|:-----  |:-----|----- |
-|owner |string   |发行者地址  |
-|initialAmount | integer |初始金额 |
-|name |string   |代币名称  |
-|decimals |integer   |代币精度  |
-|symbol |string   |代币符号  |
-
-**返回参数说明** 
-
-|类型|说明|
-|:-----|----- |
-|string   |txid  |
-
-**示例代码**
-
-```
-// 请求示例
-{
-    "id": "1",
-    "jsonrpc": "2.0",
-    "method": "ext_deployToken",
-    "params": ["0x50f6f28e6083a411fca08ef0344f3781822a54c7", "200000000", "BNT Token", 18, "BNT"]
-}
-
-// 返回结果
-{"id":1,"result":"0xa353c3886ee17b2beccca21037c14c227a77f6b51bed00fa7cfe1c664a08fa4e"}
-```
-
-### 11. 重新发送交易
-
-**请求参数说明** 
-
-方法名称: `ext_resend`
-
-|参数名|类型|说明|
-|:-----  |:-----|----- |
-|address |string   |地址  |
-|txid | string |交易ID |
-
-**返回参数说明** 
-
-|类型|说明|
-|:-----|----- |
-|string   |txid  |
-
-**示例代码**
-
-```
-// 请求示例
-{
-    "id": "1",
-    "jsonrpc": "2.0",
-    "method": "ext_resend",
-    "params": ["0xb49446a6379412222330b7739149b70b1abf113d", "0x00a71ab350553bb4e8c3b1929f620134c4b1c399264ec4e02fbf89fcfef703e9"]
-}
-
-// 返回结果
-{"id":"1","result":"0x87ef5c5757f087b482ec1ac0f5271e71a19d116ca2929addf6bc37845f899086"}
+gasPrice = max(min(最新区块平均价格, 最新区块中间价格), web3.eth.getGasPrice())
 ```
