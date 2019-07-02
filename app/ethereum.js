@@ -233,6 +233,28 @@ class Ethereum {
         }
         return utils.fromWei(balance, decimals);
     }
+
+    // 重发交易
+    async resend(address, txid) {
+        let ok = false;
+        let privateKey;
+        if (address.toLocaleLowerCase() === this._eth.address) {
+            privateKey = this._eth.privateKey;
+        } else {
+            [privateKey, ok] = this._acounts.getPriveteKey(address);
+            if (!ok) {
+                throw  new Error('Account not authorized.');
+            }
+        }
+
+        let error, hash;
+        [error, hash] = await nothrow(this._transfer.resend(
+            address, txid, privateKey));
+        if (error != null) {
+            throw error;
+        }
+        return hash;
+    }
     
     // 发送代币
     async sendTokenFrom(from, to, amount, privateKey) {

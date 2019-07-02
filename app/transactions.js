@@ -48,7 +48,7 @@ class Transactions {
         return true;
     }
 
-    // 获取用户事务记录
+    // 获取用户交易记录
     async getTxs(account) {
         let error, result;
         [error, result] = await nothrow(this._db.find({account: account}));
@@ -61,16 +61,52 @@ class Transactions {
         return result[0].transactions;
     }
 
-    // 更新账户事务记录
-    async updateTx(account, txid, nonce) {
+
+    // 获取rawTransaction
+    async getRawTransaction(account, txid) {
+        let error, result;
+        [error, result] = await nothrow(this._db.find({account: account}));
+        if (error != null) {
+            throw error;
+        }
+        if (result.length == 0) {
+            return null;
+        }
+        for (let idx in result[0].transactions) {
+            const item = result[0].transactions[idx];
+            if (item.txid === txid) {
+                return item.rawTransaction;
+            }
+        }
+        return null;
+    }
+
+    // 更新账户交易记录
+    async updateTx(account, txid, rawTransaction) {
         let error, txs;
         [error, txs] = await nothrow(this.getTxs(account));
         if (error != null) {
             throw error;
         }
 
-        const date = Date.parse(new Date())/1000;
-        txs.push({txid: txid, nonce: nonce, date: date});
+        let found = false;
+        for (let idx in txs) {
+            let item = txs[idx];
+            if (item.nonce === rawTransaction.nonce) {
+                found = true;
+                item.txid = txid;
+                item.rawTransaction = rawTransaction;
+                break;
+            }
+        }
+
+        if (!found) {
+            const date = Date.parse(new Date())/1000;
+            txs.push({
+                txid: txid, nonce: rawTransaction.nonce,
+                rawTransaction: rawTransaction, date: date
+            });
+        }
 
         let result;
         [error, result] = await nothrow(this._db.update(
@@ -84,7 +120,7 @@ class Transactions {
         return true;
     }
 
-    // 删除指定事务记录
+    // 删除指定交易记录
     async deleteTx(account, nonce) {
         let error, txs;
         [error, txs] = await nothrow(this.getTxs(account));
@@ -112,7 +148,7 @@ class Transactions {
         return true;
     }
 
-    // 删除账户事务记录
+    // 删除账户交易记录
     async deleteTxs(account, nonce) {
         let error, txs;
         [error, txs] = await nothrow(this.getTxs(account));

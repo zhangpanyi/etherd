@@ -28,6 +28,11 @@ class RPCServer {
             getwalletbalance(ethereum, req, callback);
         });
 
+        const resend = require('./handlers/resend');
+        this._server.addMethod('ext_resend', function(req, callback) {
+            resend(ethereum, req, callback);
+        });
+
         const sendtoken = require('./handlers/sendtoken');
         this._server.addMethod('ext_sendToken', function(req, callback) {
             sendtoken(ethereum, req, callback);

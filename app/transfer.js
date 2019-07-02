@@ -35,6 +35,57 @@ class Transfer {
         return gasPrice.toString();
     }
 
+    // 重新发送交易
+    async resend(address, txid, privateKey) {
+        // 交易信息
+        let error, rawTransaction;
+        [error, rawTransaction] = await nothrow(this._transactions.getRawTransaction(address, txid));
+        if (error != null) {
+            throw error;
+        }
+        if (rawTransaction == null) {
+            throw new Error('txid not found');
+        }
+        let web3 = this._web3;
+
+
+        // 获取价格
+        let gasPrice;
+        [error, gasPrice] = await nothrow(this.getGasPrice());
+        if (error != null) {
+            logger.error('Failed to resend transaction, %s', error.message);
+            throw error;
+        }
+        rawTransaction.gasPrice = web3.utils.toHex(gasPrice);
+
+        // 签名消息
+        let input;
+        [error, input] = await nothrow(this._signTransaction(rawTransaction, privateKey));
+        if (error != null) {
+            logger.error('Failed to sign message, %s', error.message);
+            throw error;
+        }
+
+        // 发送签名消息
+        let waitgroup = new Waitgroup(1);
+        web3.eth.sendSignedTransaction(input).once('transactionHash', function(hash) {
+            txid = hash;
+            waitgroup.done();
+        }).on('error', function(err) {
+            error = err;
+            waitgroup.done();
+        })
+        await waitgroup.wait();
+        if (error != null) {
+            logger.error('Failed to resend transaction, %s', error.message);
+            throw error;
+        }
+
+        await nothrow(this._transactions.updateTx(address, txid, rawTransaction));
+        logger.warn('Resend transaction, hash: %s', txid);
+        return txid;
+    }
+
     // 发送原始交易
     async sendRawTransaction(data, from, privateKey) {
         // 构造消息
@@ -91,7 +142,7 @@ class Transfer {
             throw error;
         }
 
-        await nothrow(this._transactions.updateTx(from, txid, nonce));
+        await nothrow(this._transactions.updateTx(from, txid, rawTransaction));
         callback(true);
 
         logger.warn('Send raw transaction, hash: %s, nonce: %s', txid, nonce);
@@ -172,7 +223,7 @@ class Transfer {
             throw error;
         }
 
-        await nothrow(this._transactions.updateTx(from, txid, nonce));
+        await nothrow(this._transactions.updateTx(from, txid, rawTransaction));
         callback(true);
 
         logger.warn('Transfer %s ETH from %s to %s, hash: %s, nonce: %s', amount, from, to, txid, nonce);
@@ -256,7 +307,7 @@ class Transfer {
             throw error;
         }
 
-        await nothrow(this._transactions.updateTx(from, txid, nonce));
+        await nothrow(this._transactions.updateTx(from, txid, rawTransaction));
         callback(true);
 
         logger.warn('Transfer %s %s from %s to %s, hash: %s, nonce: %s', amount, symbol, from, to, txid, nonce);
