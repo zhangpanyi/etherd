@@ -24,16 +24,12 @@ module.exports = async function(ethereum, req, callback) {
     // 获取钱包余额
     var balances = [];
     const zero = new BigNumber(0, 10);
-    const dict = ethereum.getWalletBalances(rule[0].value);
-    const keys = Object.keys(dict);
-    for (index in keys) {
-        const address = keys[index];
-        const balance = new BigNumber(dict[address], 10);
+    for (let [key, value] of ethereum.walletBalance.get(rule[0].value)) {
+        const address = key;
+        const balance = new BigNumber(value, 10);
         if (balance.comparedTo(zero) > 0) {
-            balances.push({'address': address, 'balance': dict[address]});
+            balances.push({'address': address, 'balance': value});
         }
     }
-
-    // 计算钱包余额
     callback(undefined, balances);
 }

@@ -3,6 +3,7 @@ const abi = require('./abi');
 const Notify = require('./notify');
 const Latest = require('./latest');
 const geth = require('../config/geth');
+const sleep = require('./common/sleep');
 const utils = require('./common/utils');
 const logger = require('./common/logger');
 const nothrow = require('./common/nothrow');
@@ -12,6 +13,7 @@ class Poller {
     constructor(ethereum, web3) {
         this._web3 = web3;
         this._gasPrice = null;
+        this._started = false;
         this._ethereum = ethereum;
         this._decoder = new InputDataDecoder(abi);
         this._lastBlockNumber = Latest.getHeigth();
@@ -22,8 +24,20 @@ class Poller {
         return this._gasPrice;
     }
 
+    // 开始轮询
+    async startPoll() {
+        if (!this._started) {
+            this._started = true;
+            while (this._started) {
+                if (!await this._parseNextBlock()) {
+                    await sleep(5000);
+                }
+            }
+        }
+    }
+
     // 解析区块
-    async parseNextBlock() {
+    async _parseNextBlock() {
         // 获取区块高度
         let web3 = this._web3;
         let error, blockNumber, block;
@@ -60,15 +74,6 @@ class Poller {
         Latest.updateHeigth(this._lastBlockNumber);
         this._lastBlockNumber += 1;
         return true;
-    }
-
-    // 获取通知地址
-    _getWalletNotify(contractAddress) {
-        let token = this._ethereum.findTokenByAddress(contractAddress);
-        if (token) {
-            return token.notify;
-        }
-        return null;
     }
 
     // 获取合约转账
@@ -128,6 +133,11 @@ class Poller {
                 notify.amount = web3.utils.fromWei(transaction.value);
             } else {
                 // 合约转账
+                if (transaction.to == null || this._ethereum.findTokenByAddress(transaction.to) == null) {
+                    i++;
+                    continue;
+                }
+                
                 let info, ok;
                 [error, [info, ok]] = await nothrow(this._readContractTransfer(transaction.to, transaction.input));
                 if (error) {
@@ -156,9 +166,9 @@ class Poller {
             // 更新余额
             const fromWallet = this._ethereum.isMineAccount(notify.from);
             if (fromWallet) {
-                this._ethereum.updateWalletBalances(notify.from, notify.symbol);
+                this._ethereum.walletBalance.update(notify.from, notify.symbol);
             }
-            this._ethereum.updateWalletBalances(notify.to, notify.symbol);
+            this._ethereum.walletBalance.update(notify.to, notify.symbol);
 
             // 筛除转账
             if (!fromWallet && notify.from.toLowerCase() !== token.address.toLowerCase()) {

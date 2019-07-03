@@ -7,8 +7,8 @@ const Notify = require('./notify');
 const Balances = require('./balances');
 const utils = require('./common/utils');
 const sleep = require('./common/sleep');
-const nothrow = require('./common/nothrow');
 const logger = require('./common/logger');
+const nothrow = require('./common/nothrow');
 const geth = require('../config/geth');
 const tokens = require('../config/tokens');
 
@@ -20,7 +20,6 @@ class Ethereum {
         this._acounts = null;
         this._started = false;
         this._web3 = new Web3();
-        this._balances = new Map();
         this._contracts = new Map();
         this._eip20 = new EIP20('contract/token/EIP20');
 
@@ -48,9 +47,6 @@ class Ethereum {
         // 创建交易数据库
         this._tokensStore = new Tokens();
 
-        // 确保钱包缓存
-        this._ensureWalletBalances();
-
         // 创建账户管理
         const Accounts = require('./accounts');
         this._acounts = new Accounts('keystore');
@@ -61,19 +57,52 @@ class Ethereum {
         // 创建转账模块
         const Transfer = require('./transfer');
         this._transfer = new Transfer(this._poller, this._web3);
+
+        // 创建钱包余额缓存
+        this._balances = new Balances(this);
     }
 
     // 开始轮询
     async startPoll() {
-        if (!this._started) {
-            this._started = true;
-            this._watchTransactions();
-            while (this._started) {
-                if (!await this._poller.parseNextBlock()) {
-                    await sleep(5000);
+        if (this._started) {
+            return;
+        }
+        this._started = true;
+        this._poller.startPoll();
+
+        let web3 = this._web3;
+        while (this._started) {
+            let txs = await this._tokensStore.txPending();
+            for (let idx in txs) {
+                let error, tx;
+                let txid = txs[idx].txid;
+                [error, tx] = await nothrow(web3.eth.getTransactionReceipt(txid));
+                if (error != null || tx == null) {
+                    continue;
+                }
+
+                if (!tx.status) {
+                    await this._tokensStore.updateReceipt(txid, null, false);
+                } else {
+                    let contractAddress = tx.contractAddress.toLowerCase();
+                    await this._tokensStore.updateReceipt(txid, contractAddress, true);
+                    logger.warn('Deploy ERC20 token success, symbol: %s, contractAddress: %s, txid: %s',
+                        txs[idx].symbol, contractAddress, txid);
+
+                    let notify = new Notify();
+                    notify.from         = txs[idx].owner;
+                    notify.hash         = txid;   
+                    notify.blockNumber  = tx.blockNumber;
+                    notify.symbol       = txs[idx].symbol;
+                    notify.to           = txs[idx].owner;
+                    notify.amount       = utils.fromWei(txs[idx].initialAmount, txs[idx].decimals);
+
+                    let token = await this.findToken(txs[idx].symbol);
+                    notify.post(token.notify);
                 }
             }
-        }
+            await sleep(1000 * 10);
+       }
     }
 
     // 创建账户
@@ -102,6 +131,11 @@ class Ethereum {
             symbols.push(txs[idx].symbol);
         }
         return symbols;
+    }
+
+    // 钱包余额
+    get walletBalance() {
+        return this._balances;
     }
 
     // 是否我的账户
@@ -187,24 +221,8 @@ class Ethereum {
         return decimals;
     }
 
-    // 获取钱包余额
-    getWalletBalances(symbol) {
-        if (!this._balances.has(symbol)) {
-            return [];
-        }
-        return this._balances.get(symbol).balances();
-    }
-
-    // 更新钱包余额
-    updateWalletBalances(address, symbol) {
-        if (!this._balances.has(symbol)) {
-            return;
-        }
-        this._balances.get(symbol).updateBalance(address);
-    }
-
-     // 获取账户余额
-     async getBalance(address, symbol) {
+    // 获取账户余额
+    async getBalance(address, symbol) {
         let error, balance;
         let web3 = this._web3;
         if (symbol.toUpperCase() == 'ETH') {
@@ -343,56 +361,6 @@ class Ethereum {
             await this._tokensStore.insert(owner, initialAmount, name, decimals, symbol, hash);
         }
         return hash;
-    }
-
-    // 观察交易信息
-    async _watchTransactions() {
-        let web3 = this._web3;
-        while (this._started) {
-            let txs = await this._tokensStore.txPending();
-            for (let idx in txs) {
-                let error, tx;
-                let txid = txs[idx].txid;
-                [error, tx] = await nothrow(web3.eth.getTransactionReceipt(txid));
-                if (error != null || tx == null) {
-                    continue;
-                }
-
-                if (!tx.status) {
-                    await this._tokensStore.updateReceipt(txid, null, false);
-                } else {
-                    let contractAddress = tx.contractAddress.toLowerCase();
-                    await this._tokensStore.updateReceipt(txid, contractAddress, true);
-                    logger.warn('Deploy ERC20 token success, symbol: %s, contractAddress: %s, txid: %s',
-                        txs[idx].symbol, contractAddress, txid);
-
-                    let notify = new Notify();
-                    notify.from         = txs[idx].owner;
-                    notify.hash         = txid;   
-                    notify.blockNumber  = tx.blockNumber;
-                    notify.symbol       = txs[idx].symbol;
-                    notify.to           = txs[idx].owner;
-                    notify.amount       = utils.fromWei(txs[idx].initialAmount, txs[idx].decimals);
-
-                    let token = await this.findToken(txs[idx].symbol);
-                    notify.post(token.notify);
-
-                    this._ensureWalletBalances();
-                }
-            }
-            await sleep(1000 * 10);
-        }
-    }
-
-    // 确保钱包缓存
-    async _ensureWalletBalances() {
-        let symbols = await this.getSymbols();
-        for (let idx in symbols) {
-            let symbol = symbols[idx];
-            if (!this._balances.has(symbol)) {
-                this._balances.set(symbol, new Balances(this, symbol));
-            }
-        }
     }
 }
 
