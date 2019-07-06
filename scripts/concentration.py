@@ -102,7 +102,7 @@ def token_concentration(client, addresses, to):
             except Exception as e:
                 logging.warn('Failed to send token, %s', str(e))
         else:
-            if balance < MIN_TOKEN_BALANCE:
+            if eth < MIN_TOKEN_BALANCE:
                 lack_of_gas.append(address)
     return txs, lack_of_gas
 
@@ -220,24 +220,6 @@ def main():
             logging.error('Failed to send gas, insufficient funds')
 
     # 等待手续费到账
-    if len(txs) > 0:
-        wait_until_transaction_done(client, txs)
-        print(darw_statuses(client, addresses, txdict))
-        txs = {}
-
-    # 再次执行归集操作
-    if not TOKEN_SYMBOL == 'ETH':
-        print('{0} second concentration...'.format(TOKEN_SYMBOL))
-        addresses = get_addresses_by_balance(client, MIN_TOKEN_BALANCE)
-        txs, _ = token_concentration(client, addresses, main_address)
-        for address in txs.keys():
-            txid = txs[address]
-            vec = txdict.get(address, [])
-            vec.append({'txid': txid, 'type': '{0} Concentration'.format(TOKEN_SYMBOL)})
-            txdict[address] = vec
-        print(darw_statuses(client, addresses, txdict))
-
-    # 等待归集转账到账
     if len(txs) > 0:
         wait_until_transaction_done(client, txs)
         print(darw_statuses(client, addresses, txdict))
