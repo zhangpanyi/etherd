@@ -99,6 +99,7 @@ def token_concentration(client, addresses, to):
                 else:
                     txid = client.ext_sendERC20TokenFrom(TOKEN_SYMBOL, address, to, str(balance))
                 txs[address] = txid
+                time.sleep(10)
             except Exception as e:
                 logging.warn('Failed to send token, %s', str(e))
         else:
@@ -117,6 +118,7 @@ def send_fee_to(client, feesum, toaddresses):
                 txid = client.ext_sendToken(address, str(MIN_TRANSFER_FEE))
                 txs[address] = txid
                 addresses.append(address)
+                time.sleep(10)
             except Exception as e:
                 logging.warn('Failed to send gas, %s', str(e))
             feesum -= MIN_TRANSFER_FEE*2
@@ -190,6 +192,7 @@ def main():
     print(darw_statuses(client, addresses, txdict))
 
     # 执行Token归集操作
+    addresses = addresses[:100]
     print('{0} concentration...'.format(TOKEN_SYMBOL))
     txs, lack_of_gas = token_concentration(client, addresses, main_address)
     for address in txs.keys():
