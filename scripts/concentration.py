@@ -102,7 +102,7 @@ def token_concentration(client, addresses, to):
             except Exception as e:
                 logging.warn('Failed to send token, %s', str(e))
         else:
-            if eth < MIN_TOKEN_BALANCE:
+            if balance >= MIN_TOKEN_BALANCE:
                 lack_of_gas.append(address)
     return txs, lack_of_gas
 
