@@ -77,7 +77,7 @@ class Poller {
     }
 
     // 获取合约转账
-    async _readContractTransfer(contractAddress, input) {
+    async _readContractTransfer(txid, contractAddress, input) {
         if (contractAddress == null) {
             return [undefined, false];
         }
@@ -92,12 +92,19 @@ class Poller {
         let error, decimals;
         [error, decimals] = await nothrow(this._ethereum.getDecimals(token.symbol));
         if (error) {
-            logger.info('Failed to get decimals, %s', error.message);
+            logger.info('Failed to get decimals, txid: %s, %s', txid, error.message);
             return [undefined, false];
         }
 
         // 获取转账信息
-        const result = this._decoder.decodeData(input);
+        let result;
+        try {
+            result = this._decoder.decodeData(input);
+        } catch (error) {
+            logger.info('Failed to decode data, txid: %s, %s', txid, error.message);
+            return [undefined, false];
+        }
+
         if (result.name == 'transfer') {
             let to = '0x' + result.inputs[0];
             let amount = utils.fromWei(result.inputs[1].toString(), decimals);
@@ -139,7 +146,8 @@ class Poller {
                 }
                 
                 let info, ok;
-                [error, [info, ok]] = await nothrow(this._readContractTransfer(transaction.to, transaction.input));
+                [error, [info, ok]] = await nothrow(
+                    this._readContractTransfer(transaction.hash, transaction.to, transaction.input));
                 if (error) {
                     logger.info('Failed to read contract transfer, %s', error.message);
                     continue;

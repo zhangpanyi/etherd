@@ -16,7 +16,7 @@
     "request": "^2.88.0",
     "solc": "^0.4.25",
     "validator": "^10.3.0",
-    "web3": "^1.0.0-beta.33"
+    "web3": "1.0.0-beta.35"
   },
   "devDependencies": {},
   "scripts": {
