@@ -1,5 +1,5 @@
-const Utils = require('./utils/utils');
 const validator = require('validator');
+const Utils = require('./utils/utils');
 const nothrow = require('../../common/nothrow');
 
 module.exports = async function(ethereum, req, callback) {
@@ -45,7 +45,7 @@ module.exports = async function(ethereum, req, callback) {
 
     // 发送代币
     let error, hash;
-    [error, hash] = await nothrow(ethereum.sendTokenFrom(
+    [error, hash] = await nothrow(ethereum.asyncSendTokenFrom(
         rule[0].value, rule[1].value, rule[2].value));
     if (error != null) {
         error = {code: -32000, message: error.message};

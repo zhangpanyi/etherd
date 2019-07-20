@@ -19,7 +19,7 @@ module.exports = async function(ethereum, req, callback) {
         return;
     }
 
-    let token = await ethereum.findToken(rule[0].value);
+    let token = await ethereum.asyncFindToken(rule[0].value);
     if (token == null) {
         callback(undefined, 'null');
     } else {

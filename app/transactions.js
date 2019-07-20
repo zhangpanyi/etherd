@@ -1,6 +1,7 @@
 
 const fs = require('fs');
 const Nedb = require('nedb-promise');
+
 const nothrow = require('./common/nothrow');
 
 class Transactions {
@@ -16,7 +17,7 @@ class Transactions {
     }
 
     // 获取全部记录
-    async all() {
+    async asyncGetAll() {
         let error, result;
         [error, result] = await nothrow(this._db.find({}));
         if (error != null) {
@@ -26,7 +27,7 @@ class Transactions {
     }
 
     // 确保账户存在
-    async ensure(account) {
+    async asyncEnsure(account) {
         let error, count;
         [error, count] = await nothrow(this._db.count({account: account}));
         if (error != null) {
@@ -49,7 +50,7 @@ class Transactions {
     }
 
     // 获取用户交易记录
-    async getTxs(account) {
+    async asyncGetTxs(account) {
         let error, result;
         [error, result] = await nothrow(this._db.find({account: account}));
         if (error != null) {
@@ -63,7 +64,7 @@ class Transactions {
 
 
     // 获取rawTransaction
-    async getRawTransaction(account, txid) {
+    async asyncGetRawTransaction(account, txid) {
         let error, result;
         [error, result] = await nothrow(this._db.find({account: account}));
         if (error != null) {
@@ -82,7 +83,7 @@ class Transactions {
     }
 
     // 更新账户交易记录
-    async updateTx(account, txid, rawTransaction) {
+    async asyncUpdateTx(account, txid, rawTransaction) {
         let error, txs;
         [error, txs] = await nothrow(this.getTxs(account));
         if (error != null) {
@@ -121,7 +122,7 @@ class Transactions {
     }
 
     // 删除指定交易记录
-    async deleteTx(account, nonce) {
+    async asyncDeleteTx(account, nonce) {
         let error, txs;
         [error, txs] = await nothrow(this.getTxs(account));
         if (error != null) {
@@ -149,7 +150,7 @@ class Transactions {
     }
 
     // 删除账户交易记录
-    async deleteTxs(account, nonce) {
+    async asyncDeleteTxs(account, nonce) {
         let error, txs;
         [error, txs] = await nothrow(this.getTxs(account));
         if (error != null) {

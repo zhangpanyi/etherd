@@ -1,6 +1,8 @@
 const BN = require('bn.js');
 const validator = require('validator');
+
 const Utils = require('./utils/utils');
+
 const utils = require('../../common/utils');
 const nothrow = require('../../common/nothrow');
 
@@ -94,7 +96,7 @@ module.exports = async function(ethereum, req, callback) {
     let initialAmount = rule[1].value;
     let decimals = parseInt(rule[3].value);
     initialAmount = utils.toWei(initialAmount, decimals);
-    [error, hash] = await nothrow(ethereum.deployERC20Token(
+    [error, hash] = await nothrow(ethereum.asyncDeployERC20Token(
         rule[0].value.toString(), initialAmount, rule[2].value,
         parseInt(decimals), rule[4].value.toString()));
     if (error != null) {

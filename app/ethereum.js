@@ -1,14 +1,19 @@
 const Web3 = require('web3');
+
 const abi = require('./abi');
 const Tokens = require('./tokens');
 const EIP20 = require('./eip20');
 const Poller = require('./poller');
 const Notify = require('./notify');
+const Accounts = require('./accounts');
+const Transfer = require('./transfer');
 const Balances = require('./balances');
+
 const utils = require('./common/utils');
 const sleep = require('./common/sleep');
 const logger = require('./common/logger');
 const nothrow = require('./common/nothrow');
+
 const geth = require('../config/geth');
 const tokens = require('../config/tokens');
 
@@ -44,18 +49,16 @@ class Ethereum {
             }
         }
 
-        // 创建交易数据库
-        this._tokensStore = new Tokens();
+        // 创建token存储
+        this._store = new Tokens();
 
         // 创建账户管理
-        const Accounts = require('./accounts');
         this._acounts = new Accounts('keystore');
 
         // 创建轮询模块
         this._poller = new Poller(this, this._web3);
 
         // 创建转账模块
-        const Transfer = require('./transfer');
         this._transfer = new Transfer(this._poller, this._web3);
 
         // 创建钱包余额缓存
@@ -72,7 +75,7 @@ class Ethereum {
 
         let web3 = this._web3;
         while (this._started) {
-            let txs = await this._tokensStore.txPending();
+            let txs = await this._store.asyncGetPendingTx();
             for (let idx in txs) {
                 let error, tx;
                 let txid = txs[idx].txid;
@@ -82,10 +85,10 @@ class Ethereum {
                 }
 
                 if (!tx.status) {
-                    await this._tokensStore.updateReceipt(txid, null, false);
+                    await this._store.asyncUpdateReceipt(txid, null, false);
                 } else {
                     let contractAddress = tx.contractAddress.toLowerCase();
-                    await this._tokensStore.updateReceipt(txid, contractAddress, true);
+                    await this._store.asyncUpdateReceipt(txid, contractAddress, true);
                     logger.warn('Deploy ERC20 token success, symbol: %s, contractAddress: %s, txid: %s',
                         txs[idx].symbol, contractAddress, txid);
 
@@ -97,7 +100,7 @@ class Ethereum {
                     notify.to           = txs[idx].owner;
                     notify.amount       = utils.fromWei(txs[idx].initialAmount, txs[idx].decimals);
 
-                    let token = await this.findToken(txs[idx].symbol);
+                    let token = await this.asyncFindToken(txs[idx].symbol);
                     notify.post(token.notify);
                 }
             }
@@ -115,22 +118,14 @@ class Ethereum {
         return this._acounts.getAccounts();
     }
 
-    // 获取符号列表
-    async getSymbols() {
-        let symbols = ['ETH'];
-        for (let symbol in this._tokens) {
-            symbols.push(symbol);
+    // 获取智能合约
+    getContract(token) {
+        if (this._contracts.has(token.symbol)) {
+            return this._contracts.get(token.symbol)
         }
-
-        let error, txs;
-        [error, txs] = await nothrow(this._tokensStore.txCompleted());
-        if (error != null) {
-            return symbols;
-        }
-        for (let idx in txs) {
-            symbols.push(txs[idx].symbol);
-        }
-        return symbols;
+        let contract = new this._web3.eth.Contract(abi, token.contractAddress);
+        this._contracts.set(token.symbol, contract);
+        return contract;
     }
 
     // 钱包余额
@@ -143,18 +138,26 @@ class Ethereum {
         return this._acounts.has(address);
     }
 
-    // 获取合约
-    getContract(token) {
-        if (this._contracts.has(token.symbol)) {
-            return this._contracts.get(token.symbol)
+    // 获取符号列表
+    async asyncGetSymbols() {
+        let symbols = ['ETH'];
+        for (let symbol in this._tokens) {
+            symbols.push(symbol);
         }
-        let contract = new this._web3.eth.Contract(abi, token.contractAddress);
-        this._contracts.set(token.symbol, contract);
-        return contract;
+
+        let error, txs;
+        [error, txs] = await nothrow(this._store.asyncGetCompletedTx());
+        if (error != null) {
+            return symbols;
+        }
+        for (let idx in txs) {
+            symbols.push(txs[idx].symbol);
+        }
+        return symbols;
     }
 
     // 查找代币配置
-    async findToken(symbol) {
+    async asyncFindToken(symbol) {
         if (symbol.toUpperCase() == 'ETH') {
             return this._eth;
         }
@@ -167,7 +170,7 @@ class Ethereum {
         }
 
         let error, txs;
-        [error, txs] = await nothrow(this._tokensStore.txCompleted());
+        [error, txs] = await nothrow(this._store.asyncGetCompletedTx());
         if (error != null) {
             return null;
         }
@@ -188,11 +191,31 @@ class Ethereum {
         return null;
     }
 
-    // 根据合约地址查找
-    findTokenByAddress(contractAddress) {
+    // 根据合约地址查找代币配置
+    async asyncFindTokenByAddress(contractAddress) {
         for (let key in this._tokens) {
             const token = this._tokens[key];
             if (contractAddress.toLowerCase() == token.contractAddress.toLowerCase()) {
+                return token;
+            }
+        }
+
+        let error, txs;
+        [error, txs] = await nothrow(this._store.asyncGetCompletedTx());
+        if (error != null) {
+            return null;
+        }
+
+        for (let idx in txs) {
+            if (contractAddress.toUpperCase() == txs[idx].contractAddress.toUpperCase()) {
+                let token = {
+                    symbol:             txs[idx].symbol,
+                    address:            this._eth.address,
+                    privateKey:         this._eth.privateKey,
+                    contractAddress:    txs[idx].contractAddress,
+                    notify:             this._eth.notify,
+                }
+                this._tokens[symbol] = token;
                 return token;
             }
         }
@@ -200,9 +223,9 @@ class Ethereum {
     }
 
     // 获取代币精度
-    async getDecimals(symbol) {
+    async asyncGetDecimals(symbol) {
         // 查找代币信息
-        let token = await this.findToken(symbol);
+        let token = await this.asyncFindToken(symbol);
         if (!token) {
             throw new Error('Not found token.')
         }
@@ -222,7 +245,7 @@ class Ethereum {
     }
 
     // 获取账户余额
-    async getBalance(address, symbol) {
+    async asyncGetBalance(address, symbol) {
         let error, balance;
         let web3 = this._web3;
         if (symbol.toUpperCase() == 'ETH') {
@@ -233,13 +256,13 @@ class Ethereum {
             return web3.utils.fromWei(balance);
         }
 
-        let token = await this.findToken(symbol);
+        let token = await this.asyncFindToken(symbol);
         if (token == null) {
             throw new Error('Unknown token symbol.');
         }
 
         let decimals;
-        [error, decimals] = await nothrow(this.getDecimals(symbol));
+        [error, decimals] = await nothrow(this.asyncGetDecimals(symbol));
         if (error != null) {
             throw error;
         } 
@@ -253,7 +276,7 @@ class Ethereum {
     }
 
     // 重发交易
-    async resend(address, txid) {
+    async asyncResend(address, txid) {
         let ok = false;
         let privateKey;
         if (address.toLocaleLowerCase() === this._eth.address) {
@@ -266,7 +289,7 @@ class Ethereum {
         }
 
         let error, hash;
-        [error, hash] = await nothrow(this._transfer.resend(
+        [error, hash] = await nothrow(this._transfer.asyncResend(
             address, txid, privateKey));
         if (error != null) {
             throw error;
@@ -275,7 +298,7 @@ class Ethereum {
     }
     
     // 发送代币
-    async sendTokenFrom(from, to, amount, privateKey) {
+    async asyncSendTokenFrom(from, to, amount, privateKey) {
         if (!privateKey) {
             let ok = false;
             [privateKey, ok] = this._acounts.getPriveteKey(from);
@@ -285,7 +308,7 @@ class Ethereum {
         }
 
         let error, hash;
-        [error, hash] = await nothrow(this._transfer.sendToken(
+        [error, hash] = await nothrow(this._transfer.asyncSendToken(
             from, to, amount, privateKey));
         if (error != null) {
             throw error;
@@ -293,21 +316,21 @@ class Ethereum {
         return hash;
     }
 
-    async sendToken(to, amount) {
-        return this.sendTokenFrom(this._eth.address, to, amount, this._eth.privateKey);
+    async asyncSendToken(to, amount) {
+        return this.asyncSendTokenFrom(this._eth.address, to, amount, this._eth.privateKey);
     }
 
     // 发送ERC20代币
-    async sendERC20TokenFrom(symbol, from, to, amount, privateKey) {
+    async asyncSendERC20TokenFrom(symbol, from, to, amount, privateKey) {
         // 查找代币信息
-        let token = await this.findToken(symbol);
+        let token = await this.asyncFindToken(symbol);
         if (token == null) {
             throw new Error('Unknown token symbol.');
         }
 
         // 获取代币精度
         let error, decimals, hash;
-        [error, decimals] = await nothrow(this.getDecimals(symbol));
+        [error, decimals] = await nothrow(this.asyncGetDecimals(symbol));
         if (error != null) {
             throw error;
         }
@@ -323,7 +346,7 @@ class Ethereum {
 
         // 发送ERC20代币
         let contract = this.getContract(token);
-        [error, hash] = await nothrow(this._transfer.sendERC20Token(
+        [error, hash] = await nothrow(this._transfer.asyncSendERC20Token(
             symbol, contract, decimals, from, to, amount, privateKey));
         if (error != null) {
             throw error;
@@ -331,34 +354,34 @@ class Ethereum {
         return hash;
     }
 
-    async sendERC20Token(symbol, to, amount) {
-        let token = await this.findToken(symbol);
+    async asyncSendERC20Token(symbol, to, amount) {
+        let token = await this.asyncFindToken(symbol);
         if (token == null) {
             throw new Error('Unknown token symbol.');
         }
-        return this.sendERC20TokenFrom(symbol, token.address, to, amount, token.privateKey);
+        return this.asyncSendERC20TokenFrom(symbol, token.address, to, amount, token.privateKey);
     }
 
     // 部署ERC20代币合约
-    async deployERC20Token(owner, initialAmount, name, decimals, symbol) {
+    async asyncDeployERC20Token(owner, initialAmount, name, decimals, symbol) {
         let error, hash;
         if (owner == '') {
             owner = this._eth.address;
         }
 
-        let token =  await this.findToken(symbol);
+        let token =  await this.asyncFindToken(symbol);
         if (token != null) {
             throw new Error('Symbol already exists.');
         }
 
         let deploy = this._eip20.deploy(owner, initialAmount, name, decimals, symbol);
         [error, hash] = await nothrow(
-            this._transfer.sendRawTransaction(deploy, this._eth.address, this._eth.privateKey));
+            this._transfer.asyncSendRawTransaction(deploy, this._eth.address, this._eth.privateKey));
         if (error != null) {
             throw error;
         }
         if (owner == this._eth.address) {
-            await this._tokensStore.insert(owner, initialAmount, name, decimals, symbol, hash);
+            await this._store.asyncInsertTx(owner, initialAmount, name, decimals, symbol, hash);
         }
         return hash;
     }

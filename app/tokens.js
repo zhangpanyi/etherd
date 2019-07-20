@@ -1,5 +1,6 @@
 const fs = require('fs');
 const Nedb = require('nedb-promise');
+
 const nothrow = require('./common/nothrow');
 
 class Tokens {
@@ -14,18 +15,8 @@ class Tokens {
         this._db.ensureIndex({fieldName: 'txid', unique: true});
     }
 
-    // 查询交易
-    async find(txid) {
-        let error, res;
-        [error, res] = await nothrow(this._db.find({txid: txid}));
-        if (error != null) {
-            throw error;
-        }
-        return res;
-    }
-
-    // 查询挂起交易
-    async txPending() {
+    // 查询挂起事务
+    async asyncGetPendingTx() {
         let error, res;
         [error, res] = await nothrow(this._db.find({pending: true}));
         if (error != null) {
@@ -34,8 +25,8 @@ class Tokens {
         return res;
     }
 
-    // 查询完成交易
-    async txCompleted() {
+    // 查询完成事务
+    async asyncGetCompletedTx() {
         let error, res;
         [error, res] = await nothrow(this._db.find({ok: true}));
         if (error != null) {
@@ -44,8 +35,8 @@ class Tokens {
         return res;
     }
 
-    // 更新交易凭据
-    async updateReceipt(txid, contractAddress, ok) {
+    // 更新事务凭据
+    async asyncUpdateReceipt(txid, contractAddress, ok) {
         let error, res;
         [error, res] = await nothrow(this._db.update(
             {txid: txid},
@@ -58,8 +49,8 @@ class Tokens {
         return res;
     }
 
-    // 插入交易
-    async insert(owner, initialAmount, name, decimals, symbol, txid) {
+    // 插入事务
+    async asyncInsertTx(owner, initialAmount, name, decimals, symbol, txid) {
         let error, res;
         [error, res] = await nothrow(this._db.insert({
             owner:              owner,

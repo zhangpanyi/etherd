@@ -1,6 +1,7 @@
-const Utils = require('./utils/utils');
 const validator = require('validator');
 const BigNumber = require('bignumber.js');
+
+const Utils = require('./utils/utils');
 
 module.exports = async function(ethereum, req, callback) {
     // 校验参数

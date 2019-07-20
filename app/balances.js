@@ -1,7 +1,8 @@
+const BigNumber = require('bignumber.js');
+
 const geth = require('../config/geth');
 const sleep = require('./common/sleep');
 const nothrow = require('./common/nothrow');
-const BigNumber = require('bignumber.js');
 
 const ZERO = new BigNumber(0, 10);
 
@@ -15,7 +16,7 @@ class Balances {
             for (let address of this._ethereum.getAccounts()) {
                 this._changeSet.add(address);
             }
-            this._queryBalances();
+            this._asyncQueryBalances();
         }
     }
 
@@ -32,7 +33,7 @@ class Balances {
     }
 
     // 查询地址余额
-    async _queryBalances() {
+    async _asyncQueryBalances() {
         while (true) {
             if (this._changeSet.size == 0) {
                 await sleep(1000);
@@ -41,7 +42,8 @@ class Balances {
 
             for (let address of this._changeSet) {
                 let error, balance;
-                [error, balance] = await nothrow(this._ethereum.getBalance(address, this.symbol));
+                [error, balance] = await nothrow(
+                    this._ethereum.asyncGetBalance(address, this.symbol));
                 if (error != null) {
                     await sleep(1000 * 5);
                     continue;
@@ -61,7 +63,7 @@ class Manager {
     constructor(ethereum) {
         this._ethereum = ethereum;
         this._balances = new Map();
-        this._loadBalances();
+        this._asyncLoadBalances();
     }
 
     // 获取余额
@@ -81,8 +83,8 @@ class Manager {
     }
 
     // 加载余额缓存
-    async _loadBalances() {
-        let symbols = await this._ethereum.getSymbols();
+    async _asyncLoadBalances() {
+        let symbols = await this._ethereum.asyncGetSymbols();
         for (let idx in symbols) {
             let symbol = symbols[idx];
             if (!this._balances.has(symbol)) {

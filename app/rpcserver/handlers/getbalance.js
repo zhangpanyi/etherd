@@ -38,7 +38,8 @@ module.exports = async function(ethereum, req, callback) {
     
     // 获取余额
     let error, balance;
-    [error, balance] = await nothrow(ethereum.getBalance(rule[0].value, rule[1].value));
+    [error, balance] = await nothrow(
+        ethereum.asyncGetBalance(rule[0].value, rule[1].value));
     if (error != null) {
         error = {code: -32000, message: error.message};
         callback(error, undefined);
