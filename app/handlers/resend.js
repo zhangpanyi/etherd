@@ -1,12 +1,12 @@
 const validator = require('validator');
 const Utils = require('./utils/utils');
-const nothrow = require('../../common/nothrow');
+const nothrow = require('../common/nothrow');
 
 module.exports = async function(ethereum, req, callback) {
-   // 校验参数
-   const rule = [
+    // 校验参数
+    const rule = [
         {
-            name: 'from',
+            name: 'address',
             value: null,
             is_valid: function(address) {
                 if (!validator.matches(address, '^0x[a-zA-Z0-9]{40}$')) {
@@ -17,24 +17,13 @@ module.exports = async function(ethereum, req, callback) {
             }
         },
         {
-            name: 'to',
+            name: 'txid',
             value: null,
             is_valid: function(address) {
-                if (!validator.matches(address, '^0x[a-zA-Z0-9]{40}$')) {
+                if (!validator.matches(address, '^0x[a-zA-Z0-9]{64}$')) {
                     return false;
                 }
                 this.value = address;
-                return true;
-            }
-        },
-        {
-            name: 'amount',
-            value: null,
-            is_valid: function(amount) {
-                if (!validator.isFloat(amount)) {
-                    return false;
-                }
-                this.value = amount;
                 return true;
             }
         }
@@ -43,10 +32,10 @@ module.exports = async function(ethereum, req, callback) {
         return;
     }
 
-    // 发送代币
+    // 重发交易
     let error, hash;
-    [error, hash] = await nothrow(ethereum.asyncSendTokenFrom(
-        rule[0].value, rule[1].value, rule[2].value));
+    [error, hash] = await nothrow(ethereum.asyncResend(
+        rule[0].value, rule[1].value));
     if (error != null) {
         error = {code: -32000, message: error.message};
         callback(error, undefined);

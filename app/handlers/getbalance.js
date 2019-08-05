@@ -1,6 +1,6 @@
 const validator = require('validator');
 const Utils = require('./utils/utils');
-const nothrow = require('../../common/nothrow');
+const nothrow = require('../common/nothrow');
 
 module.exports = async function(ethereum, req, callback) {
     // 校验参数

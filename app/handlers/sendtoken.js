@@ -1,32 +1,10 @@
 const validator = require('validator');
 const Utils = require('./utils/utils');
-const nothrow = require('../../common/nothrow');
+const nothrow = require('../common/nothrow');
 
 module.exports = async function(ethereum, req, callback) {
-    // 校验参数
-    const rule = [
-        {
-            name: 'symbol',
-            value: null,
-            is_valid: function(asset) {
-                if (!validator.isAscii(asset)) {
-                    return false;
-                }
-                this.value = asset;
-                return true;
-            }
-        },
-        {
-            name: 'from',
-            value: null,
-            is_valid: function(address) {
-                if (!validator.matches(address, '^0x[a-zA-Z0-9]{40}$')) {
-                    return false;
-                }
-                this.value = address;
-                return true;
-            }
-        },
+   // 校验参数
+   const rule = [
         {
             name: 'to',
             value: null,
@@ -56,8 +34,7 @@ module.exports = async function(ethereum, req, callback) {
 
     // 发送代币
     let error, hash;
-    [error, hash] = await nothrow(ethereum.asyncSendERC20TokenFrom(
-        rule[0].value, rule[1].value, rule[2].value, rule[3].value));
+    [error, hash] = await nothrow(ethereum.asyncSendToken(rule[0].value, rule[1].value));
     if (error != null) {
         error = {code: -32000, message: error.message};
         callback(error, undefined);

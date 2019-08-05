@@ -1,10 +1,10 @@
 const request = require('request');
 const rpc = require('node-json-rpc2');
 
-const logger = require('../common/logger');
+const logger = require('./common/logger');
 
-const geth = require('../../config/geth');
-const server = require('../../config/server');
+const geth = require('../config/geth');
+const server = require('../config/server');
 
 class RPCServer {
     constructor(ethereum){

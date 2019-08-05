@@ -1,7 +1,7 @@
 const Server = require('./config/server');
 const Ethereum = require('./app/ethereum');
+const RpcServer = require('./app/rpcserver');
 const logger = require('./app/common/logger');
-const RpcServer = require('./app/rpcserver/rpcserver');
 
 try {
     // 启动以太坊服务
