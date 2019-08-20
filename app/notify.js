@@ -10,25 +10,31 @@ const logger = require('./common/logger');
     let blockNumber = 0;    // 区块高度
 
     // 投递通知
-    this.post = function(url) {
-        if (!url) {
+    this.post = function(urls) {
+        if (!urls) {
             return;
         }
+        if (!urls instanceof Array) {
+            urls = [urls];
+        }
+
         this.type = 'transaction';
         let data = JSON.stringify(this);
-        let options = {
-            url: url,
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: data
-        };
-        request.post(options, function (error, response, body) {
-            if (error != null) {
-                logger.error('Failed to post notify: %s, %s', error.message, options.json);
-            }
-        });
+        for (let idx = 0; idx < urls.length; idx++) {
+            let options = {
+                url:    urls[idx],
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: data
+            };
+            request.post(options, function (error, response, body) {
+                if (error != null) {
+                    logger.error('Failed to post notify: %s, %s', error.message, options.json);
+                }
+            });
+        }
     }
 };
 
