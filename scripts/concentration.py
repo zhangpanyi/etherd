@@ -16,17 +16,18 @@ from requests.auth import HTTPBasicAuth
 # 解析命令行
 parser = argparse.ArgumentParser()
 parser.add_argument('-s', '--url', type=str, help='etherd rpc url', default='http://127.0.0.1:8545')
-parser.add_argument('-u', '--user', type=str, help='etherd rpc user', default='username')
-parser.add_argument('-p', '--password', type=str, help='etherd rpc password', default='password')
-parser.add_argument('-f', '--fee', type=str, help='fee budget', default='0.0084')
+parser.add_argument('-u', '--user', type=str, help='rpc username', default='username')
+parser.add_argument('-p', '--password', type=str, help='rpc password', default='password')
 parser.add_argument('-m', '--min', type=str, help='min balance', default='0.0084')
+parser.add_argument('-f', '--fee', type=str, help='estimate fee', default='0.0084')
 parser.add_argument('-t', '--token', type=str, help='token symbol', default='ETH')
+parser.add_argument('--sendfee', type=bool, help='send fee to addresses', default=False)
 args = parser.parse_args()
 RPC_URL = args.url
 RPC_USERNAME = args.user
 RPC_PASSWORD = args.password
 TOKEN_SYMBOL = args.token
-MIN_TRANSFER_FEE = Decimal('0.0084')
+MIN_TRANSFER_FEE = Decimal(args.fee)
 MIN_TOKEN_BALANCE = Decimal(args.min)
 
 fmt = '%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s'
@@ -209,6 +210,8 @@ def main():
         txs = {}
 
     # 发送转账手续费
+    if not args.sendfee:
+        return
     if not TOKEN_SYMBOL == 'ETH' and len(lack_of_gas) > 0:
         print('Transfer GAS to addresses...')
         try:
