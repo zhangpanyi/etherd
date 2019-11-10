@@ -1,0 +1,9 @@
+{
+    "host": "0.0.0.0", 
+    "port": 18545,
+    "login": {
+        "username": "",
+        "password": ""
+    },
+    "datadir": ".etherd"
+}
