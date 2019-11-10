@@ -1,0 +1,15 @@
+[
+    {
+        "symbol": "ETH",
+        "keystore": "test/test.keystore",
+        "unlockPassword": "123456",
+        "notify": "http://127.0.0.1/webhooks"
+    },
+    {
+        "symbol": "BNT",
+        "contract": "0xe3974c51fc9c98906ce6626a219d558e6d095962",
+        "keystore": "test/test.keystore",
+        "unlockPassword": "123456",
+        "notify": "http://127.0.0.1/webhooks"
+    }
+]

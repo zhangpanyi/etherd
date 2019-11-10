@@ -1,8 +1,0 @@
-module.exports = {
-    expire: 60 * 60 * 2, // second
-    balance_cache: false,
-    gasLimit: 420000,
-    rawTxGasLimit: 840000,
-    confirmations: 12,
-    endpoint: 'http://127.0.0.1:8545'
-};
