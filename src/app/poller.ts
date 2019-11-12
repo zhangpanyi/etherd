@@ -127,7 +127,7 @@ class Poller {
             let message: Message = {
                 type: 'transaction',
                 symbol: 'ETH',
-                from: transaction.from,
+                from: transaction.from.toLowerCase(),
                 to: '',
                 hash: transaction.hash,
                 amount: '0',
@@ -142,6 +142,9 @@ class Poller {
                 token = await this.ether.getTokenByContract(transaction.to);
                 if (token == null) {
                     idx++;
+                    if (this.ether.isMineAccount(message.from)) {
+                        this.ether.wallet.refreshBalance(message.from, message.symbol);
+                    }
                     continue;
                 }
                 
