@@ -51,7 +51,7 @@ class Poller {
         // 获取区块数量
         let blockNumber = await nothrow(this.ether.web3.eth.getBlockNumber());
         if (blockNumber.data == null || blockNumber.error) {
-            logger.info('failed to call `getBlockNumber`, %s', blockNumber.error.message);
+            logger.info('[poller] failed to call `getBlockNumber`, %s', blockNumber.error.message);
             return false;
         }
 
@@ -62,12 +62,12 @@ class Poller {
         if (this.lastBlockNumber == 0) {
             this.lastBlockNumber = blockNum;
         }
-        logger.debug('current reading block number: %d', this.lastBlockNumber);
+        logger.debug('[poller] current reading block number: %d', this.lastBlockNumber);
 
         // 获取区块信息
-       let block = await nothrow(this.ether.web3.eth.getBlock(5911111, true));
+       let block = await nothrow(this.ether.web3.eth.getBlock(this.lastBlockNumber, true));
         if (block.data == null || block.error) {
-            logger.info('failed to call `getBlock`, %s', block.error.message);
+            logger.info('[poller] failed to call `getBlock`, %s', block.error.message);
             return false;
         }
         
@@ -77,7 +77,7 @@ class Poller {
         // 解析交易信息
         let result = await nothrow(this.parseTransactions(block.data.transactions as Transaction[]));
         if (result.error) {
-            logger.info('failed to parse transactions, %s', result.error.message);
+            logger.info('[poller] failed to parse transactions, %s', result.error.message);
             return false;
         }
 
@@ -148,7 +148,7 @@ class Poller {
                 let transfer = await nothrow(
                     this.parseContractTransfer(transaction.hash, token, transaction.input));
                 if (transfer.data == null || transfer.error) {
-                    logger.info('failed to read contract transfer, %s', transfer.error.message);
+                    logger.info('[poller] failed to read contract transfer, %s', transfer.error.message);
                     continue;
                 }
 
@@ -168,15 +168,19 @@ class Poller {
             // 发送收款通知
             idx++;
             if (!this.ether.isMineAccount(message.to)) {
+                if (this.ether.isMineAccount(message.from)) {
+                    this.ether.wallet.refreshBalance(message.from, message.symbol);
+                }
                 continue;
             }
             const fromWallet = this.ether.isMineAccount(message.from);
+            this.ether.wallet.refreshBalance(message.to, message.symbol);
             if (!fromWallet) {
-                logger.warn('transfer has been received, from: %s, to: %s, symbol: %s, amount: %s, hash: %s',
+                logger.warn('[poller] transfer has been received, from: %s, to: %s, symbol: %s, amount: %s, hash: %s',
                     message.from, message.to, message.symbol, message.amount, message.hash);
                 postNotify(token.notify, message);
             } else if (token.contractAddress && token.contractAddress != message.from) {
-                logger.warn('transfer has been received but ignore, from: %s, to: %s, symbol: %s, amount: %s, hash: %s',
+                logger.warn('[poller] transfer has been received but ignore, from: %s, to: %s, symbol: %s, amount: %s, hash: %s',
                     message.from, message.to, message.symbol, message.amount, message.hash);
             }
         }
@@ -186,7 +190,7 @@ class Poller {
     async parseContractTransfer(hash: string, token: Token, input: string) {
         let decimals = await nothrow(this.ether.getTokenDecimals(token.symbol));
         if (decimals.data == null || decimals.error) {
-            logger.info('failed to get decimals, txid: %s, %s', hash, decimals.error.message);
+            logger.info('[poller] failed to get decimals, txid: %s, %s', hash, decimals.error.message);
             return {ok: false};
         }
 
@@ -194,7 +198,7 @@ class Poller {
         try {
             result = this.decoder.decodeData(input);
         } catch (error) {
-            logger.info('failed to decode data, txid: %s, %s', hash, error.message);
+            logger.info('[poller] failed to decode data, txid: %s, %s', hash, error.message);
             return {ok: false};
         }
 

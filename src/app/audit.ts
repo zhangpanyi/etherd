@@ -26,7 +26,7 @@ class Audit {
 
         const dao = new TokenDao();
         while (true) {
-            const tokens = await dao.getPendingTokens();
+            const tokens = await dao.pendingTokens();
             for (let idx in tokens) {
                 const token = tokens[idx];
                 let status = await nothrow(this.checkReceipt(token.hash));

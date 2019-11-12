@@ -42,14 +42,14 @@ class Transfer {
         const data = JSON.parse(tx.data);
         let result = await nothrow(this.sendTransaction(from, privateKey, data.to, data.value, data.data));
         if (result.data == null || result.error) {
-            logger.error('failed to resend tx, hash: %s, %s', txHash, result.error.message);
+            logger.error('[transfer] failed to resend tx, hash: %s, %s', txHash, result.error.message);
             await dao.insert(from, txHash, data);
             throw result.error;
         }
 
         let {hash} = result.data;
         await (new TokenDao).updateHash(txHash, hash);
-        logger.warn('resend transaction, old: %s, hash: %s', txHash, hash);
+        logger.warn('[transfer] resend transaction, old: %s, hash: %s', txHash, hash);
         return hash;
     }
 
@@ -58,13 +58,13 @@ class Transfer {
         // 检查余额
         let balance = await nothrow(this.ether.web3.eth.getBalance(from, 'latest'));
         if (balance.data == null || balance.error) {
-            logger.error('failed to send token, getBalance, %s', balance.error.message);
+            logger.error('[transfer] failed to send token, getBalance, %s', balance.error.message);
             throw balance.error;
         }
         let toAmount = this.ether.web3.utils.toWei(amount);
         if (BigInt(toAmount) >= BigInt(balance.data)) {
             const error = new Error('insufficient coins');
-            logger.error('failed to send token, %s', error.message);
+            logger.error('[transfer] failed to send token, %s', error.message);
             throw error;
         }
 
@@ -72,10 +72,10 @@ class Transfer {
         const value = this.ether.web3.utils.toHex(toAmount);
         let result = await nothrow(this.sendTransaction(from, privateKey, to, value, undefined));
         if (result.data == null || result.error) {
-            logger.error('failed to send token, %s', result.error.message);
+            logger.error('[transfer] failed to send token, %s', result.error.message);
             throw result.error;
         }
-        logger.warn('transfer %s ETH from %s to %s, hash: %s, nonce: %s',
+        logger.warn('[transfer] transfer %s ETH from %s to %s, hash: %s, nonce: %s',
             amount, from, to, result.data.hash, result.data.nonce);
         return result.data.hash;
     }
@@ -87,14 +87,14 @@ class Transfer {
         let contract = await this.ether.getContract(symbol);
         let balance = await nothrow(contract.methods.balanceOf(from).call());
         if (balance.data == null || balance.error != null) {
-            logger.error('failed to send ERC20 token, balanceOf, %s', balance.error);
+            logger.error('[transfer] failed to send ERC20 token, balanceOf, %s', balance.error);
             throw balance.error;
         }
 
         let toAmount = utils.toWei(amount, decimals);
         if (BigInt(toAmount) >= BigInt(balance.data)) {
             const error = new Error('insufficient coins');
-            logger.error('failed to send ERC20 token, %s', error.message);
+            logger.error('[transfer] failed to send ERC20 token, %s', error.message);
             throw error;
         }
 
@@ -102,10 +102,10 @@ class Transfer {
         const data = contract.methods.transfer(to, toAmount).encodeABI();
         let result = await nothrow(this.sendTransaction(from, privateKey, to, undefined, data));
         if (result.data == null || result.error) {
-            logger.error('failed to send ERC20 token, %s', result.error.message);
+            logger.error('[transfer] failed to send ERC20 token, %s', result.error.message);
             throw result.error;
         }
-        logger.warn('transfer %s %s from %s to %s, hash: %s, nonce: %s',
+        logger.warn('[transfer] transfer %s %s from %s to %s, hash: %s, nonce: %s',
             amount, symbol, from, to, result.data.hash, result.data.nonce);
         return result.data.hash;
     }

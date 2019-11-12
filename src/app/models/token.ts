@@ -35,7 +35,7 @@ class Token extends BaseEntity {
 }
 
 class TokenDao {
-    async getToken(symbol: string) {
+    async get(symbol: string) {
         const options: FindManyOptions = {
             where: {status: 1, symbol}
         };
@@ -43,14 +43,22 @@ class TokenDao {
         return token;
     }
 
-    async getTokenByAddress(address: string) {
+    async getByAddress(address: string) {
         const options: FindManyOptions = {
             where: {status: 1, contract: address}
         };
         return await Token.findOne(options);
     }
 
-    async getPendingTokens() {
+    async readyTokens() {
+        const options: FindManyOptions = {
+            where: {status: 1},
+            order: {id: "ASC"}
+        };
+        return await Token.find(options);
+    }
+
+    async pendingTokens() {
         const options: FindManyOptions = {
             where: {status: 0},
             order: {id: "ASC"}

@@ -8,6 +8,7 @@ import { Audit } from '@app/audit';
 import { Poller } from '@app/poller';
 import { Accounts } from '@app/accounts';
 import { Transfer } from '@app/transfer';
+import { WalletManager } from '@app/wallet';
 import { readPrivateKey, fromWei, toWei } from '@app/utils';
 import * as tokenModel from '@app/models/token';
 
@@ -27,6 +28,7 @@ class Ether {
     public web3: Web3;
     public network: string;
     public poller: Poller;
+    public wallet: WalletManager;
     private eip20: EIP20;
     private audit: Audit;
     private accounts: Accounts;
@@ -46,6 +48,7 @@ class Ether {
         this.poller = new Poller(this);
         this.poller.startPolling();
         this.transfer = new Transfer(this);
+        this.wallet = new WalletManager(this);
     }
 
     // 创建账户
@@ -61,6 +64,20 @@ class Ether {
     // 是否我的账户
     isMineAccount(address: string) {
         return this.accounts.has(address);
+    }
+
+    // 获取所有代币
+    async getTokens() {
+        let dao = new tokenModel.TokenDao();
+        const tokens = await dao.readyTokens();
+        let array: Array<string> = new Array<string>();
+        for (let idx in tokens) {
+            array.push(tokens[idx].symbol);
+        }
+        for (let idx in this.tokens) {
+            array.push(this.tokens[idx].symbol);
+        }
+        return array;
     }
 
     // 获取代币信息
@@ -80,7 +97,7 @@ class Ether {
         }
 
         let dao = new tokenModel.TokenDao();
-        let token = await dao.getToken(symbol);
+        let token = await dao.get(symbol);
         if (!token || token.owner != eth.walletAddress) {
             return null;
         }
@@ -92,6 +109,7 @@ class Ether {
             privateKey: eth.privateKey,
             notify: eth.notify,
         };
+        this.tokens.push(result);
         return result;
     }
 
@@ -153,7 +171,7 @@ class Ether {
         return token.decimals;
     }
 
-    // 根据获取获取代币信息
+    // 根据合约获取代币信息
     async getTokenByContract(address: string) {
         let eth: Token | null = null;
         for (let idx in this.tokens) {
@@ -173,7 +191,7 @@ class Ether {
         }
         
         let dao = new tokenModel.TokenDao();
-        let token = await dao.getTokenByAddress(address);
+        let token = await dao.getByAddress(address);
         if (!token || token.owner != eth.walletAddress) {
             return null;
         }
@@ -185,6 +203,7 @@ class Ether {
             privateKey: eth.privateKey,
             notify: eth.notify,
         };
+        this.tokens.push(result);
         return result;
     }
 

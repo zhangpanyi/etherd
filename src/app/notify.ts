@@ -23,6 +23,6 @@ export async function postNotify(url: string | null | undefined, msg: Message) {
         body: JSON.stringify(msg)
     }).promise());
     if (response.error) {
-        logger.error('failed to post notify: %s, %s', response.error.message, JSON.stringify(msg));
+        logger.error('[notify] failed to post notify: %s, %s', response.error.message, JSON.stringify(msg));
     }
 }

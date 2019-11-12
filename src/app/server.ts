@@ -1,6 +1,7 @@
 import * as jayson from 'jayson';
 import * as request from 'request-promise';
 import { logger } from '@pkg/logger';
+import { nothrow } from '@pkg/promise';
 import { Ether } from '@app/ether';
 import Geth from '@configs/geth.json';
 import * as config from '@configs/server.json';
@@ -17,8 +18,8 @@ import { deployToken } from '@app/methods/deploy';
 import { getAccounts } from '@app/methods/get_accounts';
 import { sendTokenFrom } from '@app/methods/send_token_from';
 import { sendERC20From } from '@app/methods/send_erc20_from';
-import { resendTransaction } from '@app/methods/resend';
-import { nothrow } from '@pkg/promise';
+import { getWalletBalance } from '@app/methods/get_wallet_balance';
+import { resendTransaction } from '@app/methods/resend_transcation';
 
 export class RpcServer {
     private ether: Ether;
@@ -98,6 +99,9 @@ export class RpcServer {
             },
             'sendERC20From': function(params: any, callback: any) {
                 sendERC20From(self.ether, params, callback);
+            },
+            'getWalletBalance': function(params: any, callback: any) {
+                getWalletBalance(self.ether, params, callback);
             },
             'resendTransaction': function(params: any, callback: any) {
                 resendTransaction(self.ether, params, callback);
