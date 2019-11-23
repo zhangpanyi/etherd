@@ -294,6 +294,6 @@ const ABI: Array<AbiItem> = [
 		"name": "Burn",
 		"type": "event"
 	}
-];
+]
 
-export { ABI };
+export { ABI }

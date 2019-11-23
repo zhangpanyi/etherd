@@ -1,4 +1,4 @@
-import { configure, getLogger } from 'log4js';
+import { configure, getLogger } from 'log4js'
 
 configure({
     appenders: {
@@ -20,7 +20,7 @@ configure({
     categories: {
         default: { appenders: ['console', 'filter'], level: 'all' }
     }
-});
+})
 
-let logger = getLogger();
-export { logger };
+let logger = getLogger()
+export { logger }

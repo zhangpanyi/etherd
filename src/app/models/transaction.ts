@@ -1,4 +1,4 @@
-import {Entity, PrimaryGeneratedColumn, FindManyOptions, Column, BaseEntity, Index } from "typeorm";
+import {Entity, PrimaryGeneratedColumn, FindManyOptions, Column, BaseEntity, Index } from "typeorm"
 
 @Entity()
 @Index(['address'])
@@ -7,28 +7,28 @@ import {Entity, PrimaryGeneratedColumn, FindManyOptions, Column, BaseEntity, Ind
 @Index(['address', 'nonce'], { unique: true })
 class Transaction extends BaseEntity {
     @PrimaryGeneratedColumn("increment")
-    id: number | undefined;
+    id: number | undefined
 
     @Column()
-    address: string = '';
+    address: string = ''
 
     @Column()
-    hash: string = '';
+    hash: string = ''
 
     @Column()
-    nonce: number = 0;
+    nonce: number = 0
 
     @Column()
-    data: string = '';
+    data: string = ''
 }
 
 class TransactionDao {
     async get(address: string, hash: string) {
-        return await Transaction.findOne({address, hash});
+        return await Transaction.findOne({address, hash})
     }
 
     async getByHash(hash: string) {
-        return await Transaction.findOne({hash});
+        return await Transaction.findOne({hash})
     }
 
     async top(address: string, offset: number, limit: number) {
@@ -37,26 +37,26 @@ class TransactionDao {
             order: {nonce: "DESC"},
             skip: offset,
             take: limit
-        };
-        return await Transaction.find(options);
+        }
+        return await Transaction.find(options)
     }
 
     async insert(address: string, hash: string, tx: any) {
-        let record = new Transaction();
-        record.address = address;
-        record.hash = hash;
-        record.nonce = tx.nonce;
-        record.data = JSON.stringify(tx);
-        return await Transaction.save(record);
+        let record = new Transaction()
+        record.address = address
+        record.hash = hash
+        record.nonce = tx.nonce
+        record.data = JSON.stringify(tx)
+        return await Transaction.save(record)
     }
 
     async deleteByHash(address: string, hash: string) {
-        return await Transaction.delete({address, hash});
+        return await Transaction.delete({address, hash})
     }
 
     async deleteByNonce(address: string, nonce: number) {
-        return await Transaction.delete({address, nonce});
+        return await Transaction.delete({address, nonce})
     }
 }
 
-export { Transaction, TransactionDao };
+export { Transaction, TransactionDao }

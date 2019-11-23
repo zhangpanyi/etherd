@@ -1,30 +1,30 @@
 class WaitGroup {
-    private count : number;
-    constructor(count: number) { this.count = count; }
+    private count : number
+    constructor(count: number) { this.count = count }
 
     done() {
         if (this.count > 0) {
-            this.count--;
+            this.count--
         }
     }
 
     async wait() {
-        let self = this;
+        let self = this
         await new Promise(function(resolve) {
-            self.waitUntil(resolve);
-        });
+            self.waitUntil(resolve)
+        })
     }
 
     private waitUntil(resolve: any) {
-        let self = this;
+        let self = this
         if (this.count <= 0) {
-            resolve();
+            resolve()
         } else {
             setTimeout(function(){
-                self.waitUntil(resolve);
-            }, 0);
+                self.waitUntil(resolve)
+            }, 0)
         }
     }
 }
 
-export { WaitGroup };
+export { WaitGroup }
