@@ -10,6 +10,7 @@ const connect = require('connect')
 const jsonParser = require('body-parser').json
 const middleware = require('jayson/lib/server/middleware')
 
+import { collect } from '@app/methods/collect'
 import { sendFee } from '@app/methods/send_fee'
 import { sendToken } from '@app/methods/send_token'
 import { sendERC20 } from '@app/methods/send_erc20'
@@ -77,6 +78,9 @@ export class RpcServer {
     private router(): {[methodName: string]: jayson.MethodLike} {
         let self = this
         return {
+            'collect': function(params: any, callback: any) {
+                collect(self.ether, params, callback)
+            },
             'sendFee': function(params: any, callback: any) {
                 sendFee(self.ether, params, callback)
             },
