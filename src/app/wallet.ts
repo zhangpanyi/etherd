@@ -1,6 +1,7 @@
 import { Ether } from '@app/ether'
-import { sleep, nothrow } from '@pkg/promise'
 import { logger } from '@pkg/logger'
+import { sleep, nothrow } from '@pkg/promise'
+import BigNumber from 'bignumber.js'
 
 // 代币钱包
 class Wallet {
@@ -24,6 +25,16 @@ class Wallet {
     // 获取余额
     getBalances() {
         return this.balances
+    }
+
+    // 减去金额
+    minus(address: string, amount: string) {
+        let balance = this.balances.get(address)
+        if (balance == null) {
+            return
+        }
+        balance = new BigNumber(balance).minus(amount).toString(10)
+        this.balances.set(address, balance)
     }
 
     // 刷新账户余额
@@ -72,6 +83,11 @@ class WalletManager {
                 }
             }
         })()
+    }
+
+    // 获取钱包
+    getWallet(symbol: string) {
+        return this.wallets.get(symbol)
     }
 
     // 获取余额

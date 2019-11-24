@@ -238,7 +238,12 @@ class Ether {
         if (token == null) {
             throw new Error('invalid token symbol')
         }
-        return await this.sendTokenFrom(token.walletAddress, to, amount, token.privateKey)
+        const hash = await this.sendTokenFrom(token.walletAddress, to, amount, token.privateKey)
+        const wallet = this.wallet.getWallet('ETH')
+        if (wallet) {
+            wallet.minus(token.walletAddress, amount)
+        }
+        return hash
     }
 
     async sendTokenFrom(from: string, to: string, amount: string, privateKey: Buffer | undefined) {
@@ -249,7 +254,12 @@ class Ether {
             }
             privateKey = key
         }
-        return await this.transfer.sendToken(from, to, amount, privateKey as Buffer)
+        const hash = await this.transfer.sendToken(from, to, amount, privateKey as Buffer)
+        const wallet = this.wallet.getWallet('ETH')
+        if (wallet) {
+            wallet.minus(from, amount)
+        }
+        return hash
     }
 
     // 发送ERC20代币
@@ -258,7 +268,12 @@ class Ether {
         if (token == null) {
             throw new Error('invalid token symbol')
         }
-        return await this.sendERC20TokenFrom(symbol, token.walletAddress, to, amount, token.privateKey)
+        const hash = await this.sendERC20TokenFrom(symbol, token.walletAddress, to, amount, token.privateKey)
+        const wallet = this.wallet.getWallet(symbol)
+        if (wallet) {
+            wallet.minus(token.walletAddress, amount)
+        }
+        return hash
     }
 
     async sendERC20TokenFrom(symbol: string, from: string, to: string, amount: string, privateKey: Buffer | undefined) {
@@ -269,7 +284,12 @@ class Ether {
             }
             privateKey = key
         }
-        return await this.transfer.sendERC20Token(from, to, symbol, amount, privateKey as Buffer)
+        const hash = await this.transfer.sendERC20Token(from, to, symbol, amount, privateKey as Buffer)
+        const wallet = this.wallet.getWallet(symbol)
+        if (wallet) {
+            wallet.minus(from, amount)
+        }
+        return hash
     }
 
     // 部署ERC20代币
