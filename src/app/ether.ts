@@ -69,7 +69,7 @@ class Ether {
     // 获取所有代币
     async getTokens() {
         let dao = new tokenModel.TokenDao()
-        const tokens = await dao.readyTokens()
+        const tokens = await dao.getAvailableTokens()
         let array: Array<string> = new Array<string>()
         for (let idx in tokens) {
             array.push(tokens[idx].symbol)

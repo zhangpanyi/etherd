@@ -2,297 +2,297 @@ import { AbiItem } from 'web3-utils/types'
 
 const ABI: Array<AbiItem> = [
 	{
-		"constant": true,
-		"inputs": [],
-		"name": "name",
-		"outputs": [
+		'constant': true,
+		'inputs': [],
+		'name': 'name',
+		'outputs': [
 			{
-				"name": "",
-				"type": "string"
+				'name': '',
+				'type': 'string'
 			}
 		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
+		'payable': false,
+		'stateMutability': 'view',
+		'type': 'function'
 	},
 	{
-		"constant": false,
-		"inputs": [
+		'constant': false,
+		'inputs': [
 			{
-				"name": "spender",
-				"type": "address"
+				'name': 'spender',
+				'type': 'address'
 			},
 			{
-				"name": "value",
-				"type": "uint256"
+				'name': 'value',
+				'type': 'uint256'
 			}
 		],
-		"name": "approve",
-		"outputs": [
+		'name': 'approve',
+		'outputs': [
 			{
-				"name": "success",
-				"type": "bool"
+				'name': 'success',
+				'type': 'bool'
 			}
 		],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
+		'payable': false,
+		'stateMutability': 'nonpayable',
+		'type': 'function'
 	},
 	{
-		"constant": true,
-		"inputs": [],
-		"name": "totalSupply",
-		"outputs": [
+		'constant': true,
+		'inputs': [],
+		'name': 'totalSupply',
+		'outputs': [
 			{
-				"name": "",
-				"type": "uint256"
+				'name': '',
+				'type': 'uint256'
 			}
 		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
+		'payable': false,
+		'stateMutability': 'view',
+		'type': 'function'
 	},
 	{
-		"constant": false,
-		"inputs": [
+		'constant': false,
+		'inputs': [
 			{
-				"name": "from",
-				"type": "address"
+				'name': 'from',
+				'type': 'address'
 			},
 			{
-				"name": "to",
-				"type": "address"
+				'name': 'to',
+				'type': 'address'
 			},
 			{
-				"name": "value",
-				"type": "uint256"
+				'name': 'value',
+				'type': 'uint256'
 			}
 		],
-		"name": "transferFrom",
-		"outputs": [
+		'name': 'transferFrom',
+		'outputs': [
 			{
-				"name": "success",
-				"type": "bool"
+				'name': 'success',
+				'type': 'bool'
 			}
 		],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
+		'payable': false,
+		'stateMutability': 'nonpayable',
+		'type': 'function'
 	},
 	{
-		"constant": true,
-		"inputs": [],
-		"name": "decimals",
-		"outputs": [
+		'constant': true,
+		'inputs': [],
+		'name': 'decimals',
+		'outputs': [
 			{
-				"name": "",
-				"type": "uint8"
+				'name': '',
+				'type': 'uint8'
 			}
 		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
+		'payable': false,
+		'stateMutability': 'view',
+		'type': 'function'
 	},
 	{
-		"constant": false,
-		"inputs": [
+		'constant': false,
+		'inputs': [
 			{
-				"name": "value",
-				"type": "uint256"
+				'name': 'value',
+				'type': 'uint256'
 			}
 		],
-		"name": "burn",
-		"outputs": [
+		'name': 'burn',
+		'outputs': [
 			{
-				"name": "success",
-				"type": "bool"
+				'name': 'success',
+				'type': 'bool'
 			}
 		],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
+		'payable': false,
+		'stateMutability': 'nonpayable',
+		'type': 'function'
 	},
 	{
-		"constant": true,
-		"inputs": [
+		'constant': true,
+		'inputs': [
 			{
-				"name": "",
-				"type": "address"
+				'name': '',
+				'type': 'address'
 			}
 		],
-		"name": "balanceOf",
-		"outputs": [
+		'name': 'balanceOf',
+		'outputs': [
 			{
-				"name": "",
-				"type": "uint256"
+				'name': '',
+				'type': 'uint256'
 			}
 		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
+		'payable': false,
+		'stateMutability': 'view',
+		'type': 'function'
 	},
 	{
-		"constant": false,
-		"inputs": [
+		'constant': false,
+		'inputs': [
 			{
-				"name": "from",
-				"type": "address"
+				'name': 'from',
+				'type': 'address'
 			},
 			{
-				"name": "value",
-				"type": "uint256"
+				'name': 'value',
+				'type': 'uint256'
 			}
 		],
-		"name": "burnFrom",
-		"outputs": [
+		'name': 'burnFrom',
+		'outputs': [
 			{
-				"name": "success",
-				"type": "bool"
+				'name': 'success',
+				'type': 'bool'
 			}
 		],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
+		'payable': false,
+		'stateMutability': 'nonpayable',
+		'type': 'function'
 	},
 	{
-		"constant": true,
-		"inputs": [],
-		"name": "symbol",
-		"outputs": [
+		'constant': true,
+		'inputs': [],
+		'name': 'symbol',
+		'outputs': [
 			{
-				"name": "",
-				"type": "string"
+				'name': '',
+				'type': 'string'
 			}
 		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
+		'payable': false,
+		'stateMutability': 'view',
+		'type': 'function'
 	},
 	{
-		"constant": false,
-		"inputs": [
+		'constant': false,
+		'inputs': [
 			{
-				"name": "to",
-				"type": "address"
+				'name': 'to',
+				'type': 'address'
 			},
 			{
-				"name": "value",
-				"type": "uint256"
+				'name': 'value',
+				'type': 'uint256'
 			}
 		],
-		"name": "transfer",
-		"outputs": [],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
+		'name': 'transfer',
+		'outputs': [],
+		'payable': false,
+		'stateMutability': 'nonpayable',
+		'type': 'function'
 	},
 	{
-		"constant": false,
-		"inputs": [
+		'constant': false,
+		'inputs': [
 			{
-				"name": "spender",
-				"type": "address"
+				'name': 'spender',
+				'type': 'address'
 			},
 			{
-				"name": "value",
-				"type": "uint256"
+				'name': 'value',
+				'type': 'uint256'
 			},
 			{
-				"name": "extraData",
-				"type": "bytes"
+				'name': 'extraData',
+				'type': 'bytes'
 			}
 		],
-		"name": "approveAndCall",
-		"outputs": [
+		'name': 'approveAndCall',
+		'outputs': [
 			{
-				"name": "success",
-				"type": "bool"
+				'name': 'success',
+				'type': 'bool'
 			}
 		],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
+		'payable': false,
+		'stateMutability': 'nonpayable',
+		'type': 'function'
 	},
 	{
-		"constant": true,
-		"inputs": [
+		'constant': true,
+		'inputs': [
 			{
-				"name": "",
-				"type": "address"
+				'name': '',
+				'type': 'address'
 			},
 			{
-				"name": "",
-				"type": "address"
+				'name': '',
+				'type': 'address'
 			}
 		],
-		"name": "allowance",
-		"outputs": [
+		'name': 'allowance',
+		'outputs': [
 			{
-				"name": "",
-				"type": "uint256"
+				'name': '',
+				'type': 'uint256'
 			}
 		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
+		'payable': false,
+		'stateMutability': 'view',
+		'type': 'function'
 	},
 	{
-		"inputs": [
+		'inputs': [
 			{
-				"name": "initialSupply",
-				"type": "uint256"
+				'name': 'initialSupply',
+				'type': 'uint256'
 			},
 			{
-				"name": "tokenName",
-				"type": "string"
+				'name': 'tokenName',
+				'type': 'string'
 			},
 			{
-				"name": "tokenSymbol",
-				"type": "string"
+				'name': 'tokenSymbol',
+				'type': 'string'
 			}
 		],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "constructor"
+		'payable': false,
+		'stateMutability': 'nonpayable',
+		'type': 'constructor'
 	},
 	{
-		"anonymous": false,
-		"inputs": [
+		'anonymous': false,
+		'inputs': [
 			{
-				"indexed": true,
-				"name": "from",
-				"type": "address"
+				'indexed': true,
+				'name': 'from',
+				'type': 'address'
 			},
 			{
-				"indexed": true,
-				"name": "to",
-				"type": "address"
+				'indexed': true,
+				'name': 'to',
+				'type': 'address'
 			},
 			{
-				"indexed": false,
-				"name": "value",
-				"type": "uint256"
+				'indexed': false,
+				'name': 'value',
+				'type': 'uint256'
 			}
 		],
-		"name": "Transfer",
-		"type": "event"
+		'name': 'Transfer',
+		'type': 'event'
 	},
 	{
-		"anonymous": false,
-		"inputs": [
+		'anonymous': false,
+		'inputs': [
 			{
-				"indexed": true,
-				"name": "from",
-				"type": "address"
+				'indexed': true,
+				'name': 'from',
+				'type': 'address'
 			},
 			{
-				"indexed": false,
-				"name": "value",
-				"type": "uint256"
+				'indexed': false,
+				'name': 'value',
+				'type': 'uint256'
 			}
 		],
-		"name": "Burn",
-		"type": "event"
+		'name': 'Burn',
+		'type': 'event'
 	}
 ]
 

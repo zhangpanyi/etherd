@@ -1,8 +1,13 @@
-import {Entity, PrimaryGeneratedColumn, Column, BaseEntity, Index } from "typeorm"
+import {
+    BaseEntity,
+    Entity,
+    Column,
+    PrimaryGeneratedColumn,
+} from 'typeorm'
 
 @Entity()
 class Block extends BaseEntity {
-    @PrimaryGeneratedColumn("increment")
+    @PrimaryGeneratedColumn('increment')
     id: number | undefined
 
     @Column()

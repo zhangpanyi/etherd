@@ -1,7 +1,7 @@
 import * as path from 'path'
 import { readFileSync } from 'fs'
 import { BigNumber } from 'bignumber.js'
-const keythereum = require("keythereum")
+const keythereum = require('keythereum')
 
 export function toWei(amount: string, decimals: number) {
     let base = new BigNumber(10, 10)

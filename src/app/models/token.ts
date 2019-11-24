@@ -1,4 +1,13 @@
-import {Entity, PrimaryGeneratedColumn, FindManyOptions, Column, BaseEntity, Index } from "typeorm"
+import {
+    BaseEntity,
+    Entity,
+    Column,
+    PrimaryGeneratedColumn,
+    FindManyOptions,
+    Index
+} from 'typeorm'
+
+enum Status { Pending = 0, Done = 1, Failed = 2 }
 
 @Entity()
 @Index(['status'])
@@ -6,7 +15,7 @@ import {Entity, PrimaryGeneratedColumn, FindManyOptions, Column, BaseEntity, Ind
 @Index(['status', 'symbol'], { unique: true })
 @Index(['status', 'contract'], { unique: true })
 class Token extends BaseEntity {
-    @PrimaryGeneratedColumn("increment")
+    @PrimaryGeneratedColumn('increment')
     id: number | undefined
 
     @Column()
@@ -37,38 +46,37 @@ class Token extends BaseEntity {
 class TokenDao {
     async get(symbol: string) {
         const options: FindManyOptions = {
-            where: {status: 1, symbol}
-        }
-        let token = await Token.findOne(options)
-        return token
-    }
-
-    async getByAddress(address: string) {
-        const options: FindManyOptions = {
-            where: {status: 1, contract: address}
+            where: {status: Status.Done, symbol}
         }
         return await Token.findOne(options)
     }
 
-    async readyTokens() {
+    async getByAddress(address: string) {
         const options: FindManyOptions = {
-            where: {status: 1},
-            order: {id: "ASC"}
+            where: {status: Status.Done, contract: address}
+        }
+        return await Token.findOne(options)
+    }
+
+    async getAvailableTokens() {
+        const options: FindManyOptions = {
+            where: {status: Status.Done},
+            order: {id: 'ASC'}
         }
         return await Token.find(options)
     }
 
     async pendingTokens() {
         const options: FindManyOptions = {
-            where: {status: 0},
-            order: {id: "ASC"}
+            where: {status: Status.Pending},
+            order: {id: 'ASC'}
         }
         return await Token.find(options)
     }
 
     async updateHash(hash: string, newHash: string) {
         return await Token.getRepository().update(
-            {hash: hash}, {hash: newHash, contract: '', status: 0})
+            {hash: hash}, {hash: newHash, contract: '', status: Status.Pending})
     }
 
     async updateStatus(hash: string, status: number, contract: string | undefined) {
@@ -80,4 +88,4 @@ class TokenDao {
     }
 }
 
-export { Token, TokenDao }
+export { Token, TokenDao, Status }

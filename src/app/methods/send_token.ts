@@ -1,4 +1,4 @@
-import { Validator } from "class-validator"
+import { Validator } from 'class-validator'
 
 import { Ether } from '@app/ether'
 import { logger } from '@pkg/logger'

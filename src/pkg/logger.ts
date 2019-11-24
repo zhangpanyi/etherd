@@ -12,7 +12,7 @@ configure({
         },
         filter: {
             type: 'logLevelFilter',
-            level: "info",
+            level: 'info',
             appender: 'file'
         },
         console: { type: 'console' }

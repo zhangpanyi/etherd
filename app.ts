@@ -3,6 +3,7 @@ import { existsSync, mkdirSync } from 'fs';
 import Web3 from 'web3';
 import { Ether } from '@app/ether';
 import { logger } from '@pkg/logger';
+import { Worker } from '@app/worker';
 import { RpcServer } from '@app/server';
 import { openConnect } from "@app/models/conn";
 
@@ -23,7 +24,12 @@ import * as serverConfig from '@configs/server.json';
     // 打开数据连接
     await openConnect(network);
 
+    // 开始异步作业
+    let ether = new Ether(web3, network)
+    let worker = new Worker(ether);
+    worker.start()
+
     // 运行JSON-RPC2服务
-    let server = new RpcServer(new Ether(web3, network));
+    let server = new RpcServer(ether);
     server.run(serverConfig.host, serverConfig.port);
 })();

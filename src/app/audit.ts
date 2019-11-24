@@ -1,13 +1,7 @@
 import Web3 from 'web3'
 import { logger } from '@pkg/logger'
 import { nothrow, sleep } from '@pkg/promise'
-import { TokenDao } from '@app/models/token'
-
-const enum Status {
-    PENDING,
-    OK,
-    FAILED
-}
+import { TokenDao, Status } from '@app/models/token'
 
 class Audit {
     private web3: Web3
@@ -35,15 +29,15 @@ class Audit {
                     continue
                 }
 
-                if (status.data.status == Status.PENDING) {
+                if (status.data.status == Status.Pending) {
                     continue
                 }
 
-                if (status.data.status == Status.OK) {
+                if (status.data.status == Status.Done) {
                     await dao.updateStatus(token.hash, 1, status.data.contract)
                     logger.info('[audit] deploy success, address: %s, contract: %s, hash: %s',
                         token.owner, status.data.contract, token.hash)
-                } else if (status.data.status == Status.FAILED) {
+                } else if (status.data.status == Status.Failed) {
                     await dao.updateStatus(token.hash, 2, status.data.contract)
                     logger.error('[audit] deploy failure, address: %s, hash: %s', token.owner, token.hash)
                 }
@@ -60,16 +54,16 @@ class Audit {
         }
 
         if (!receipt.data || receipt.data.blockNumber == 0) {
-            return {status: Status.PENDING}
+            return {status: Status.Pending}
         }
         if (!receipt.data.status) {
-            return {status: Status.FAILED}
+            return {status: Status.Failed}
         }
         let contractAddress = ''
         if (receipt.data.contractAddress) {
             contractAddress = receipt.data.contractAddress.toLowerCase()
         }
-        return {status: Status.OK, contract: contractAddress}
+        return {status: Status.Done, contract: contractAddress}
     }
 }
 

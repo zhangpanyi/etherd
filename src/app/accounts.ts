@@ -1,4 +1,4 @@
-const keythereum = require("keythereum")
+const keythereum = require('keythereum')
 import { existsSync, mkdirSync, readdirSync } from 'fs'
 import * as serverConfig from '@configs/server.json'
 

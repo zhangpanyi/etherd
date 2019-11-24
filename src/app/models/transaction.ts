@@ -1,4 +1,11 @@
-import {Entity, PrimaryGeneratedColumn, FindManyOptions, Column, BaseEntity, Index } from "typeorm"
+import {
+    BaseEntity,
+    Entity,
+    Column,
+    PrimaryGeneratedColumn,
+    FindManyOptions,
+    Index
+} from 'typeorm'
 
 @Entity()
 @Index(['address'])
@@ -6,7 +13,7 @@ import {Entity, PrimaryGeneratedColumn, FindManyOptions, Column, BaseEntity, Ind
 @Index(['address', 'hash'], { unique: true })
 @Index(['address', 'nonce'], { unique: true })
 class Transaction extends BaseEntity {
-    @PrimaryGeneratedColumn("increment")
+    @PrimaryGeneratedColumn('increment')
     id: number | undefined
 
     @Column()
@@ -34,7 +41,7 @@ class TransactionDao {
     async top(address: string, offset: number, limit: number) {
         const options: FindManyOptions = {
             where: {address},
-            order: {nonce: "DESC"},
+            order: {nonce: 'DESC'},
             skip: offset,
             take: limit
         }
